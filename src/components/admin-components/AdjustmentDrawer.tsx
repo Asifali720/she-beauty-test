@@ -1,0 +1,269 @@
+'use client'
+
+// React Imports
+import { useState } from 'react'
+
+import Button from '@mui/material/Button'
+import Drawer from '@mui/material/Drawer'
+import IconButton from '@mui/material/IconButton'
+import Typography from '@mui/material/Typography'
+import Divider from '@mui/material/Divider'
+
+// Component Imports
+import { useMutation, useQuery, type QueryObserverResult, type RefetchOptions } from '@tanstack/react-query'
+
+import * as yup from 'yup'
+import { useForm, Controller } from 'react-hook-form'
+
+import { yupResolver } from '@hookform/resolvers/yup'
+
+import { toast } from 'react-toastify'
+
+// Component Imports
+import CustomTextField from '@core/components/mui/TextField'
+import type { Adjustment } from '@/types/adjustment'
+import { AdminAdjustmentService, AdminDistributorService } from '@/services'
+import { Spinner } from '.'
+import { useDebounce } from '@/@core/hooks/useDebounce'
+import CustomAutocomplete from '@/@core/components/mui/Autocomplete'
+import type { Distributor } from '@/types/distributor'
+
+type Props = {
+  open: boolean
+  handleClose: () => void
+  selectedPopUp: string
+  refetch: (options?: RefetchOptions | undefined) => Promise<QueryObserverResult<any, Error>>
+  adjustment?: Adjustment
+}
+
+const schema = yup.object().shape({
+  distributor: yup
+    .object({
+      _id: yup.string().required('Distributor is required'),
+      name: yup.string().required('Distributor is required')
+    })
+    .required('Distributor is required'),
+  amount: yup
+    .string()
+    .transform(value => (Number.isNaN(value) ? null : value))
+    .nonNullable()
+    .required('Amount required'),
+  note: yup.string()
+})
+
+const AdjustmentDrawer = ({ open, handleClose, selectedPopUp, adjustment, refetch }: Props) => {
+  // States
+  const [isLoading, setIsLoading] = useState(false)
+  const debounceSearch = useDebounce('')
+
+  const values = {
+    distributor:
+      selectedPopUp === 'edit'
+        ? { _id: adjustment?.distributor?._id || '', name: adjustment?.distributor?.name || '' }
+        : { _id: '', name: '' },
+    amount: selectedPopUp === 'edit' ? adjustment?.amount || '' : '',
+    note: selectedPopUp === 'edit' ? adjustment?.note || '' : ''
+  }
+
+  //hooks
+  const {
+    control,
+    reset,
+    handleSubmit,
+    formState: { errors }
+  } = useForm({
+    values,
+    mode: 'onBlur',
+    resolver: yupResolver(schema)
+  })
+
+  const onSubmit = (data: Adjustment) => {
+    const { distributor, note, amount } = data
+
+    if (adjustment && selectedPopUp === 'edit') {
+      setIsLoading(true)
+
+      updateAdjustmentMutation.mutate({
+        distributor: distributor?._id,
+        note,
+        amount,
+        _id: adjustment?._id
+      })
+    } else {
+      setIsLoading(true)
+      addAdjustmentMutation.mutate({ distributor: distributor?._id, note, amount })
+    }
+  }
+
+  // Reset function
+  const handleReset = () => {
+    handleClose()
+    reset()
+    setIsLoading(false)
+    refetch()
+  }
+
+  //Add Adjustment mutation
+  const addAdjustmentMutation = useMutation({
+    mutationFn: AdminAdjustmentService.addAdjustment,
+    onSuccess: handleAddAdjustmentSuccess,
+    onError: handleAddAdjustmentError
+  })
+
+  function handleAddAdjustmentSuccess(data: any) {
+    if (data?.message) {
+      handleReset()
+      toast.success(data?.message || 'Adjustment created successfully')
+    }
+  }
+
+  function handleAddAdjustmentError(error: any) {
+    refetch()
+    setIsLoading(false)
+
+    if (error.response.data.error)
+      toast.error(error.response.data.error || 'Oops! something went wrong.please try again')
+  }
+
+  //update Adjustment mutation
+  const updateAdjustmentMutation = useMutation({
+    mutationFn: AdminAdjustmentService.UpdateAdjustment,
+    onSuccess: handleUpdateAdjustmentSuccess,
+    onError: handleUpdateAdjustmentError
+  })
+
+  function handleUpdateAdjustmentSuccess(data: any) {
+    if (data?.adjustments) {
+      handleReset()
+      toast.success(data?.message || 'Adjustment updated successfully')
+    }
+  }
+
+  function handleUpdateAdjustmentError(error: any) {
+    refetch()
+    setIsLoading(false)
+
+    console.log({ error })
+
+    if (error.response.data.error)
+      toast.error(error.response.data.error || 'Oops! something went wrong.please try again')
+  }
+
+  //use Query for distributors searching
+  const { data, error, isError } = useQuery({
+    queryKey: ['DistributorSearchForAdjustment', debounceSearch],
+    queryFn: () => AdminDistributorService.searchDistributor(debounceSearch)
+  })
+
+  if (isError) toast.error(error.message || 'Oops! something went wrong')
+
+  return (
+    <>
+      <Spinner open={isLoading} />
+
+      <Drawer
+        open={open}
+        anchor='right'
+        variant='temporary'
+        onClose={handleReset}
+        ModalProps={{ keepMounted: true }}
+        sx={{ '& .MuiDrawer-paper': { width: { xs: 300, sm: 400 } } }}
+      >
+        <div className='flex items-center justify-between plb-5 pli-6'>
+          <Typography variant='h5'>{selectedPopUp === 'add' ? 'Add' : 'Edit'} Adjustment</Typography>
+          <IconButton onClick={handleReset}>
+            <i className='tabler-x text-textPrimary' />
+          </IconButton>
+        </div>
+        <Divider />
+        <div>
+          <form onSubmit={handleSubmit(onSubmit)} className='flex flex-col gap-6 p-6 ' autoComplete='off'>
+            <Controller
+              control={control}
+              name={`distributor`}
+              rules={{ required: true }}
+              render={({ field: { onChange, value } }) => (
+                <CustomAutocomplete
+                  fullWidth
+                  onChange={(event, item) => {
+                    onChange(item)
+                  }}
+                  value={value}
+                  options={data?.distributors?.map((item: Distributor) => item) || []}
+                  getOptionLabel={item => item.name}
+                  isOptionEqualToValue={(option, value) =>
+                    value?._id === undefined || value?._id === '' || option?._id === value?._id
+                  }
+                  renderInput={params => (
+                    <CustomTextField
+                      {...params}
+                      error={Boolean(errors.distributor)}
+                      {...(errors.distributor && { helperText: errors.distributor.message })}
+                      label='Distributors'
+                      placeholder='e.g john'
+                      required
+                    />
+                  )}
+                />
+              )}
+            />
+
+            <Controller
+              name='amount'
+              control={control}
+              rules={{
+                required: true
+              }}
+              render={({ field: { value, onChange, onBlur } }) => (
+                <CustomTextField
+                  label='Amount'
+                  fullWidth
+                  type='number'
+                  required
+                  placeholder='eg. 10'
+                  value={value}
+                  onBlur={onBlur}
+                  onChange={onChange}
+                  error={Boolean(errors.amount)}
+                  {...(errors.amount && { helperText: errors.amount.message })}
+                />
+              )}
+            />
+
+            <Controller
+              name='note'
+              control={control}
+              rules={{
+                required: true
+              }}
+              render={({ field: { value, onChange, onBlur } }) => (
+                <CustomTextField
+                  label='Note'
+                  placeholder='Type a note'
+                  multiline
+                  rows={4}
+                  fullWidth
+                  value={value}
+                  onBlur={onBlur}
+                  onChange={onChange}
+                  error={Boolean(errors.note)}
+                  {...(errors.note && { helperText: errors.note.message })}
+                />
+              )}
+            />
+            <div className='flex items-center gap-4'>
+              <Button variant='contained' type='submit'>
+                {selectedPopUp === 'add' ? 'Submit' : 'Update'}
+              </Button>
+              <Button variant='tonal' color='error' type='reset' onClick={() => handleReset()}>
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </div>
+      </Drawer>
+    </>
+  )
+}
+
+export default AdjustmentDrawer

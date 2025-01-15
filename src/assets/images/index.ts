@@ -1,0 +1,7 @@
+export { default as Lipstick } from './Lipstick.jpg'
+export { default as LipStick } from './Lipstick.png'
+export { default as NailPolish } from './NailPolish.jpg'
+export { default as TwoWayCake } from './TwoWayCake.jpg'
+export { default as LiquidConcealer } from './LiquidConcealer.jpg'
+export { default as LiquidFoundation } from './LiquidFoundation.jpg'
+export { default as SheBeautyLogo } from './SheBeautyLogo.png'
