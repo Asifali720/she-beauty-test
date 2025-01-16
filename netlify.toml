@@ -1,8 +1,11 @@
-# example netlify.toml
 [build]
   command = "yarn build"
   functions = "netlify/functions"
   publish = ".next"
+
+  ## Specify the Node.js version to use
+  [build.environment]
+  NODE_VERSION = "20.18.1"
 
   ## Uncomment to use this redirect for Single Page Applications like create-react-app.
   ## Not needed for static site generators.
