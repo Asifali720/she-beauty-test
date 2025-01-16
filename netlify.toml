@@ -7,7 +7,7 @@
   [build.environment]
   NODE_VERSION = "20.18.1"
   PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "false" # Ensures Chromium is downloaded
-  PUPPETEER_CACHE_DIR = "/opt/build/cache/puppeteer" # Cache Chromium in persistent build cache
+  PUPPETEER_CACHE_DIR = "/var/task/netlify/functions/pgnfen/.cache/puppeteer" # Cache Chromium in persistent build cache
 
   ## Uncomment to use this redirect for Single Page Applications like create-react-app.
   ## Not needed for static site generators.
