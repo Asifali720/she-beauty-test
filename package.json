@@ -11,7 +11,7 @@
     "lint:fix": "next lint --fix",
     "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx}\"",
     "build:icons": "tsx src/assets/iconify-icons/bundle-icons-css.ts",
-    "postinstall": "npx puppeteer install && npx puppeteer browsers install chrome"
+    "postinstall": "npm run build:icons && npx puppeteer browsers install chrome"
   },
   "dependencies": {
     "@emotion/cache": "11.11.0",
