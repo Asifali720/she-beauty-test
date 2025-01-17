@@ -5,9 +5,8 @@ import { formatTime } from '@/@core/utils/format'
 export async function createDistributorPdf({ distributor, mergedData, startDate, endDate }: any) {
   // eslint-disable-next-line import/no-named-as-default-member
   const browser = await puppeteer.launch({
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
     headless: true,
-    executablePath: '/opt/build/cache/puppeteer/chrome-linux/chrome'
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
   })
   const page = await browser.newPage()
 
