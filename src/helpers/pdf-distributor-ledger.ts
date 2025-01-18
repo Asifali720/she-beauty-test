@@ -1,13 +1,9 @@
-import puppeteer from 'puppeteer'
+import * as pdf from 'html-pdf-node'
 
 import { formatTime } from '@/@core/utils/format'
 
 export async function createDistributorPdf({ distributor, mergedData, startDate, endDate }: any) {
   // eslint-disable-next-line import/no-named-as-default-member
-  const browser = await puppeteer.launch({
-    headless: false
-  })
-  const page = await browser.newPage()
 
   const SheBeautyLogo =
     'https://firebasestorage.googleapis.com/v0/b/she-beauty-6cb28.appspot.com/o/image%2F11f2cf7c-d8bd-4f0d-a8cf-b14eac5adf56.png?alt=media&token=ee5d57de-cb5a-4fc9-91c8-de05df16ec19'
@@ -41,7 +37,7 @@ export async function createDistributorPdf({ distributor, mergedData, startDate,
         table {
           width: 100%;
           border-collapse: collapse;
-    
+
         }
         th, td {
           border: 1px solid black;
@@ -51,18 +47,18 @@ export async function createDistributorPdf({ distributor, mergedData, startDate,
         th {
           font-weight: 600;
         }
-     
-   
+
+
       </style>
     </head>
     <body>
-   
+
   <div style="display: flex; flex-direction: row; align-items: center; justify-content: center; width: 100%">
    <img src="${SheBeautyLogo}" alt="SheBeauty Logo" style="max-width:100px; max-height:100px; "  />
   </div>
 
 
-            
+
       <h1>Ledger Report</h1>
   `
 
@@ -111,15 +107,8 @@ export async function createDistributorPdf({ distributor, mergedData, startDate,
 
   html += `</body></html>`
 
-  await page.setContent(html)
+  const options = { format: 'A4', margin: { top: 25, bottom: 25, right: 25, left: 25 } }
+  const pdfBuffer = await pdf.generatePdf({ content: html }, options)
 
-  const pdfBytes = await page.pdf({
-    format: 'A4',
-    margin: { top: 25, bottom: 25, right: 25, left: 25 },
-    printBackground: true
-  })
-
-  await browser.close()
-
-  return pdfBytes
+  return pdfBuffer
 }
