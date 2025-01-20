@@ -30,9 +30,10 @@ type Props = {
   open: boolean
   invoiceId: string
   children: any
+  onClick?: () => void
 }
 
-const InvoiceCollapsibleTable = ({ head, children, open, invoiceId }: Props) => {
+const InvoiceCollapsibleTable = ({ head, children, open, invoiceId, onClick }: Props) => {
   const theme = useTheme()
 
   //use Query for getting invoice items
@@ -46,7 +47,9 @@ const InvoiceCollapsibleTable = ({ head, children, open, invoiceId }: Props) => 
 
   return (
     <Fragment>
-      <StyledTableRow hover>{children}</StyledTableRow>
+      <StyledTableRow hover onClick={onClick}>
+        {children}
+      </StyledTableRow>
 
       <StyledTableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
         <StyledTableCell
@@ -86,24 +89,24 @@ const InvoiceCollapsibleTable = ({ head, children, open, invoiceId }: Props) => 
                           hover
                           sx={{ '&:last-child td, &:last-child th': { borderBottom: 0 } }}
                         >
-                           <StyledTableCell>
-                  <Box display='flex' flexDirection='row' alignItems='center' gap={4}>
-                    {photo ? (
-                      <Image
-                        src={photo}
-                        alt={name || ''}
-                        width={40}
-                        height={40}
-                        className='w-[40px] h-[40px] cursor-pointer'
-                        unoptimized
-                      />
-                    ) : (
-                      <Box sx={{ width: '40px', height: '40px', bgcolor: 'background.default' }} />
-                    )}
+                          <StyledTableCell>
+                            <Box display='flex' flexDirection='row' alignItems='center' gap={4}>
+                              {photo ? (
+                                <Image
+                                  src={photo}
+                                  alt={name || ''}
+                                  width={40}
+                                  height={40}
+                                  className='w-[40px] h-[40px] cursor-pointer'
+                                  unoptimized
+                                />
+                              ) : (
+                                <Box sx={{ width: '40px', height: '40px', bgcolor: 'background.default' }} />
+                              )}
 
-                    {name}
-                  </Box>
-                </StyledTableCell>
+                              {name}
+                            </Box>
+                          </StyledTableCell>
                           <StyledTableCell>{sku}</StyledTableCell>
                           <StyledTableCell>{item?.qty}</StyledTableCell>
                           <StyledTableCell>{item?.cost}</StyledTableCell>

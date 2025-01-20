@@ -73,7 +73,8 @@ export const config = {
     '/api/auth/logout',
     '/api/auth/me',
     '/api/auth/update-password',
-    '/api/admin/:function*',
+
+    // '/api/admin/:function*',
     '/api/staff/:function*'
   ]
 }

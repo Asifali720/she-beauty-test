@@ -53,6 +53,8 @@ const DistributorLedger = ({ params }: { params: { distributorId: string } }) =>
     enabled: Boolean(distributorId)
   })
 
+  console.log('🚀 ~ DistributorLedger ~ getDistributorbyId:', getDistributorbyId)
+
   const distributorData: Distributor = getDistributorbyId?.data?.data?.distributor || {}
 
   //use Query for legder
@@ -67,6 +69,8 @@ const DistributorLedger = ({ params }: { params: { distributorId: string } }) =>
         dateRange?.endDate
       )
   })
+
+  console.log('🚀 ~ DATA: fetcthing', data)
 
   if (isError) toast.error(error.message || 'Oops! something went wrong')
 
@@ -139,8 +143,10 @@ const DistributorLedger = ({ params }: { params: { distributorId: string } }) =>
             <StyledTableCell>{distributorData?.to_received || 0}</StyledTableCell>
             <StyledTableCell>{distributorData?.last_received_amount || 0}</StyledTableCell>
             <StyledTableCell>{formatTime(distributorData?.last_received) || 0}</StyledTableCell>
+
             <StyledTableCell>{distributorData?.claimed_amount || 0}</StyledTableCell>
             <StyledTableCell>{formatTime(distributorData?.createdAt) || 'N/A'}</StyledTableCell>
+
             <StyledTableCell>{formatTime(distributorData?.updatedAt) || 'N/A'}</StyledTableCell>
           </StyledTableRow>
         )}
@@ -166,6 +172,7 @@ const DistributorLedger = ({ params }: { params: { distributorId: string } }) =>
           <TableRowLoader rowsNum={rowsPerPage} cellsNum={DISTRIBUTOR_LEGDER_HEAD_DATA.length} />
         ) : (
           data?.distributorLegder?.map((row: any, index: number) => {
+            console.log('🚀 ~ data?.distributorLegder?.map ~ data:', data)
             const photo = row?.screenshot
             const amount = row?.invoice_amount || row?.amount || row?.total_cost
 

@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
     if (fileType === 'pdf') {
       const pdfBytes = await createDistributorPdf({ distributor, mergedData, startDate, endDate })
 
-      if (!pdfBytes) {
+      if (pdfBytes === undefined) {
         throw new Error('Failed to generate PDF bytes')
       }
 

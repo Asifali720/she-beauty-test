@@ -32,6 +32,7 @@ import ConfirmationDialog from '../confirmation-dialog'
 import TableRowLoader from './TableRowLoader'
 import { ImageViewDialogBox } from '.'
 import type { DateRange } from '@/types/date'
+import InvoiceDrawer from './InvoiceDrawer'
 
 const InvoiceTable = () => {
   // ** States
@@ -45,6 +46,8 @@ const InvoiceTable = () => {
   const [dateRange, setDateRange] = useState<DateRange>({ startDate: null, endDate: null })
   const [isLoadingSpinner, setIsLoadingSpinner] = useState(false)
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false)
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const [distributorInvoiceId, setDistributorInvoiceId] = useState<string>('')
 
   const router = useRouter()
   const debounceSearch = useDebounce(searchValue)
@@ -60,11 +63,16 @@ const InvoiceTable = () => {
     setPageNo(1)
   }
 
+  console.log('🚀 ~ AdminInvoiceService:', AdminInvoiceService)
+
   //use Query for invoice data
   const { data, error, isLoading, isError, isFetching, refetch } = useQuery({
     queryKey: ['invoices', pageNo, rowsPerPage, dateRange],
     queryFn: () => AdminInvoiceService.getInvoices(pageNo, rowsPerPage, dateRange?.startDate, dateRange?.endDate)
   })
+
+  console.log('🚀 ~ InvoiceTable ~ data:', data)
+  console.log('🚀 ~ InvoiceTable ~ invoiceData:', invoiceData)
 
   if (isError) toast.error(error.message || 'Oops! something went wrong')
 
@@ -156,9 +164,16 @@ const InvoiceTable = () => {
     else setDateRange({ startDate: null, endDate: null })
   }
 
+  const handleOpenDrawerAndSetInvoiceId = (id: string) => {
+    setIsDrawerOpen(true)
+    setDistributorInvoiceId(id)
+  }
+
   return (
     <>
       <Spinner open={isLoadingSpinner} />
+
+      <InvoiceDrawer open={isDrawerOpen} invoiceId={distributorInvoiceId} handleClose={() => setIsDrawerOpen(false)} />
 
       <ConfirmationDialog
         open={openConfirmDialog}
@@ -196,6 +211,7 @@ const InvoiceTable = () => {
           <TableRowLoader rowsNum={rowsPerPage} cellsNum={INVOICE_HEAD_DATA.length} />
         ) : (
           (searchInvoice?.data || data)?.invoices?.map((row: Invoice, index: number) => {
+            console.log('🚀 ~ row:', row)
             const { name, photo } = row.distributor!
             const _id = row._id!
 
@@ -252,6 +268,15 @@ const InvoiceTable = () => {
                     </IconButton>
                     <IconButton onClick={() => handleOpenConfirmationBox(row?._id)}>
                       <Icon icon='mdi:trash' />
+                    </IconButton>
+                    <IconButton
+                      style={{ rotate: '-45deg' }}
+                      onClick={() => handleOpenDrawerAndSetInvoiceId(row?._id ? row?._id : '')}
+                    >
+                      <Icon icon='mdi:send' />
+                    </IconButton>
+                    <IconButton>
+                      <Icon icon='mdi:download' />
                     </IconButton>
                   </Box>
                 </StyledTableCell>

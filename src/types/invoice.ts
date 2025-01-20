@@ -24,3 +24,9 @@ export type InvoiceItems = {
   cost?: number
   product: Product
 }
+
+export type DistributorInvoice = {
+  invoiceId?: string
+  fileType?: string
+  email?: string
+}

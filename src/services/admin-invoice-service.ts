@@ -1,4 +1,4 @@
-import type { Invoice } from '@/types/invoice'
+import type { DistributorInvoice, Invoice } from '@/types/invoice'
 import { axiosInstance } from './axiosCofig'
 
 export const getInvoices = (
@@ -50,4 +50,14 @@ export const deleteInvoice = (invoiceId: string | undefined) => {
 
 export const getInvoiceById = (invoiceId: string | undefined) => {
   return axiosInstance.get(`/admin/invoices/by-id?id=${invoiceId}`)
+}
+
+export const exportDistributorInvoice = ({ invoiceId, fileType, email }: DistributorInvoice) => {
+  return axiosInstance
+    .post(`/admin/invoices/distributor`, {
+      id: invoiceId,
+      fileType,
+      email
+    })
+    .then(res => res.data)
 }

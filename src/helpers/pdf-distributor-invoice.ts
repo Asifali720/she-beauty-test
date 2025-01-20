@@ -1,0 +1,65 @@
+import * as pdf from 'html-pdf-node'
+
+export async function createInvoicePdf({ distributer, invoiceItems, invoice }: any) {
+  let html = ''
+
+  html += `<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+</head>
+<body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; line-height: 1.5;">
+    <div style="max-width: 600px; margin: auto; border: 1px solid #ccc; padding: 20px;">
+        <h1 style="text-align: right; font-size: 52px; margin: 0; font-family: 'Montserrat', serif ">INVOICE</h1>
+        <p style="text-align: right; font-size: 14px; margin: 0; font-weight: 600;">#${invoice?.invoice_number}</p>
+
+        <div style="margin: 20px 0;">
+            <p style="margin: 0;"><strong>BILLED TO:</strong>${distributer?.name}</p>
+            <p style="margin: 0;"><strong>PAY TO:</strong>${distributer?.address}</p>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <thead>
+                <tr>
+                    <th style="border-bottom: 1px solid #ccc; text-align: left; padding: 5px;">PRODUCT</th>
+                    <th style="border-bottom: 1px solid #ccc; text-align: left; padding: 5px;">PRICE</th>
+                    <th style="border-bottom: 1px solid #ccc; text-align: left; padding: 5px;">QTY</th>
+                    <th style="border-bottom: 1px solid #ccc; text-align: left; padding: 5px;">AMOUNT</th>
+                </tr>
+            </thead>
+            <tbody>
+            ${invoiceItems?.invoiceItems
+              ?.map((item: any) => {
+                return `
+                <tr>
+                    <td style="padding: 5px;">${item?.product?.name}</td>
+                    <td style="padding: 5px;">${item?.product?.price}</td>
+                    <td style="padding: 5px;">${item?.quantity}</td>}
+                    <td style="padding: 5px;">${item?.amount}</td>
+                </tr>
+               `
+              })
+              .join('')}
+                
+            </tbody>
+        </table>
+
+        <div style="text-align: right; margin: 20px 0;">
+            <p style="margin: 0;">Sub-Total: $1,250.00</p>
+            <p style="margin: 0;">Discount (30%): $375.00</p>
+            <p style="font-size: 18px; font-weight: bold; margin: 0;">TOTAL: $875.00</p>
+        </div>
+        <p>Thank you for your business.</p>
+    </div>
+</body>
+</html>`
+
+  const options = { format: 'A4', margin: { top: 25, bottom: 25, right: 25, left: 25 } }
+  const pdfBuffer = await pdf.generatePdf({ content: html }, options)
+
+  return pdfBuffer
+}
