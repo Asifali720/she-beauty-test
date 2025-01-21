@@ -1,6 +1,8 @@
 import * as pdf from 'html-pdf-node'
 
-export async function createInvoicePdf({ distributer, invoiceItems, invoice }: any) {
+export async function createInvoicePdf({ distributor, invoiceItems, invoice, invoiceTotal }: any) {
+  const percentagePrice = (invoiceTotal / 100) * 30
+
   let html = ''
 
   html += `<html lang="en">
@@ -18,8 +20,8 @@ export async function createInvoicePdf({ distributer, invoiceItems, invoice }: a
         <p style="text-align: right; font-size: 14px; margin: 0; font-weight: 600;">#${invoice?.invoice_number}</p>
 
         <div style="margin: 20px 0;">
-            <p style="margin: 0;"><strong>BILLED TO:</strong>${distributer?.name}</p>
-            <p style="margin: 0;"><strong>PAY TO:</strong>${distributer?.address}</p>
+            <p style="margin: 0;"><strong style="padding-right: 20px; padding-bottom: 24px;">BILLED TO:</strong>${distributor?.distributor?.name}</p>
+            <p style="margin: 0;"><strong style="padding-right: 20px">PAY TO:</strong>${distributor?.distributor?.address}</p>
         </div>
 
         <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
@@ -38,8 +40,8 @@ export async function createInvoicePdf({ distributer, invoiceItems, invoice }: a
                 <tr>
                     <td style="padding: 5px;">${item?.product?.name}</td>
                     <td style="padding: 5px;">${item?.product?.price}</td>
-                    <td style="padding: 5px;">${item?.quantity}</td>}
-                    <td style="padding: 5px;">${item?.amount}</td>
+                    <td style="padding: 5px;">${item?.qty}</td>
+                    <td style="padding: 5px;">${item?.cost}</td>
                 </tr>
                `
               })
@@ -49,16 +51,19 @@ export async function createInvoicePdf({ distributer, invoiceItems, invoice }: a
         </table>
 
         <div style="text-align: right; margin: 20px 0;">
-            <p style="margin: 0;">Sub-Total: $1,250.00</p>
-            <p style="margin: 0;">Discount (30%): $375.00</p>
-            <p style="font-size: 18px; font-weight: bold; margin: 0;">TOTAL: $875.00</p>
+            <p style="margin: 0;">Sub-Total: $${invoiceTotal}</p>
+            <p style="margin: 0;">Discount (30%): $${percentagePrice}</p>
+            <p style="font-size: 18px; font-weight: bold; margin: 0;">TOTAL: $${invoiceTotal - percentagePrice}</p>
         </div>
         <p>Thank you for your business.</p>
     </div>
 </body>
 </html>`
 
-  const options = { format: 'A4', margin: { top: 25, bottom: 25, right: 25, left: 25 } }
+  const options = {
+    format: 'A4',
+    margin: { top: 25, bottom: 25, right: 25, left: 25 }
+  }
   const pdfBuffer = await pdf.generatePdf({ content: html }, options)
 
   return pdfBuffer

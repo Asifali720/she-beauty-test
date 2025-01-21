@@ -3,24 +3,23 @@ import { NextResponse } from 'next/server'
 
 import { z } from 'zod'
 
-import { sendEmail } from '@/helpers/mailer'
 import InvoiceModel from '@/models/invoice.model'
 
 import { createInvoicePdf } from '@/helpers/pdf-distributor-invoice'
 import { axiosInstance } from '@/services/axiosCofig'
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
-    const reqBody = await request.json()
-    const { fileType, email, id } = reqBody
+    const id = request.nextUrl.searchParams.get('id')
 
     const schema = z.object({
-      fileType: z.enum(['csv', 'pdf']),
-      email: z.string().email(),
       id: z.string()
     })
+    if (id === undefined) {
+      return NextResponse.json({ message: 'invalid id' })
+    }
 
-    const validationRules = schema.safeParse(reqBody)
+    const validationRules = schema.safeParse({ id: request.nextUrl.searchParams.get('id') })
 
     if (!validationRules.success) {
       const { errors } = validationRules.error
@@ -41,27 +40,14 @@ export async function POST(request: NextRequest) {
       return acc + item.product.price * item.qty
     }, 0)
 
-    if (fileType !== 'pdf') {
-      return NextResponse.json({
-        message: 'Invalid file type'
-      })
-    }
-
     const pdfBytes = await createInvoicePdf({ distributor, invoice, invoiceItems, invoiceTotal })
     if (pdfBytes === undefined) {
       throw new Error('Failed to generate PDF bytes')
     }
 
-    await sendEmail({
-      pdfBytes: pdfBytes,
-      email: email,
-      emailType: 'INVOICE',
-      fileType: fileType,
-      invoice_number: invoice.invoice_number
-    })
-    return NextResponse.json({
-      success: true,
-      message: `Invoice report has been sent to ${email} successfully`
+    return new NextResponse(pdfBytes, {
+      headers: { 'Content-Type': 'application/pdf' },
+      status: 200
     })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })

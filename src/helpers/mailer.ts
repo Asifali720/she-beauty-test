@@ -4,7 +4,16 @@ import { hash } from 'bcryptjs'
 
 import UserModel from '@/models/user.model'
 
-export const sendEmail = async ({ email, emailType, userId, startDate, endDate, pdfBytes, fileType }: any) => {
+export const sendEmail = async ({
+  email,
+  emailType,
+  userId,
+  startDate,
+  endDate,
+  pdfBytes,
+  fileType,
+  invoice_number
+}: any) => {
   try {
     // create a hased token
     let html, subject, attachments
@@ -38,6 +47,15 @@ export const sendEmail = async ({ email, emailType, userId, startDate, endDate, 
       attachments = [
         {
           filename: `LedgerReport-${startDate}to${endDate}.${fileType}`,
+          content: pdfBytes
+        }
+      ]
+    } else if (emailType === 'INVOICE') {
+      subject = `Invoice Report`
+      html = `<p>Please find attached the invoice report. invoie number ${invoice_number}</p>`
+      attachments = [
+        {
+          filename: `InvoiceReport- pdf.${fileType}`,
           content: pdfBytes
         }
       ]

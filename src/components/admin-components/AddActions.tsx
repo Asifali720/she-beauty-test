@@ -13,9 +13,10 @@ import Grid from '@mui/material/Grid'
 
 type Props = {
   onSubmit: (e?: BaseSyntheticEvent<object, any, any> | undefined) => Promise<void>
+  onSubmitAndSavePdf: (e?: BaseSyntheticEvent<object, any, any> | undefined) => Promise<void>
 }
 
-const AddActions = ({ onSubmit }: Props) => {
+const AddActions = ({ onSubmit, onSubmitAndSavePdf }: Props) => {
   return (
     <Grid container spacing={6}>
       <Grid item xs={12}>
@@ -26,6 +27,9 @@ const AddActions = ({ onSubmit }: Props) => {
             </Button>
             <Button fullWidth variant='contained' className='capitalize' onClick={onSubmit}>
               Save
+            </Button>
+            <Button fullWidth variant='contained' className='capitalize' onClick={onSubmitAndSavePdf}>
+              Save & Download Pdf
             </Button>
           </CardContent>
         </Card>

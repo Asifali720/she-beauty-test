@@ -61,3 +61,31 @@ export const exportDistributorInvoice = ({ invoiceId, fileType, email }: Distrib
     })
     .then(res => res.data)
 }
+
+export const addAndSaveInvoicePdf = async ({ distributorId, products, totalCost, due_date, invoice_date }: Invoice) => {
+  const response = await axiosInstance
+    .post(`/admin/invoices/add`, {
+      distributor: distributorId,
+      products,
+      totalCost,
+      due_date,
+      invoice_date
+    })
+    .then(res => res.data)
+
+  console.log(response, '>>>>> response addAndSave')
+
+  return axiosInstance
+    .get(`/admin/invoices/download-pdf`, {
+      responseType: 'blob',
+      params: { id: response.invoice._id }
+    })
+    .then(res => {
+      const fileURL = window.URL.createObjectURL(res.data)
+      const alink = document.createElement('a')
+      alink.href = fileURL
+      alink.download = `${response.distributor.name}.pdf`
+      alink.click()
+      window.URL.revokeObjectURL(fileURL)
+    })
+}

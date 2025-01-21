@@ -33,6 +33,7 @@ import TableRowLoader from './TableRowLoader'
 import { ImageViewDialogBox } from '.'
 import type { DateRange } from '@/types/date'
 import InvoiceDrawer from './InvoiceDrawer'
+import { axiosInstance } from '@/services/axiosCofig'
 
 const InvoiceTable = () => {
   // ** States
@@ -169,6 +170,25 @@ const InvoiceTable = () => {
     setDistributorInvoiceId(id)
   }
 
+  const handleDownloadInvoicePdf = async (id: string, name: string) => {
+    try {
+      setIsLoadingSpinner(true)
+      const response = await axiosInstance.get(`/admin/invoices/download-pdf`, {
+        responseType: 'blob',
+        params: { id }
+      })
+      setIsLoadingSpinner(false)
+      const fileURL = window.URL.createObjectURL(response.data)
+      const alink = document.createElement('a')
+      alink.href = fileURL
+      alink.download = `${name}.pdf`
+      alink.click()
+      window.URL.revokeObjectURL(fileURL)
+    } catch (error) {
+      console.error('Error downloading PDF:', error)
+    }
+  }
+
   return (
     <>
       <Spinner open={isLoadingSpinner} />
@@ -275,7 +295,14 @@ const InvoiceTable = () => {
                     >
                       <Icon icon='mdi:send' />
                     </IconButton>
-                    <IconButton>
+                    <IconButton
+                      onClick={() =>
+                        handleDownloadInvoicePdf(
+                          row?._id ? row?._id : '',
+                          row?.distributor?.name ? row?.distributor?.name : ''
+                        )
+                      }
+                    >
                       <Icon icon='mdi:download' />
                     </IconButton>
                   </Box>

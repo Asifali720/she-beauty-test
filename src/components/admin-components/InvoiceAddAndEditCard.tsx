@@ -43,6 +43,7 @@ import type { Distributor } from '@/types/distributor'
 import Spinner from './Spinner'
 import { validateUniqueSKU } from '@/helpers/uniqueSku'
 import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
+import { axiosInstance } from '@/services/axiosCofig'
 
 const productSchema = yup
   .array(
@@ -156,7 +157,6 @@ const InvoiceAddAndEditCard = ({ params }: { params?: { invoiceId: string } }) =
   // Process form data here
   const onSubmit = (data: Invoice) => {
     const { distributor, products, due_date, invoice_date } = data
-
     setIsLoading(true)
 
     if (invoiceId)
@@ -176,6 +176,55 @@ const InvoiceAddAndEditCard = ({ params }: { params?: { invoiceId: string } }) =
         due_date,
         invoice_date
       })
+  }
+
+  const onSubmitAndSavePdf = async (data: Invoice) => {
+    try {
+      const { distributor, products, due_date, invoice_date } = data
+      setIsLoading(true)
+
+      const response = await axiosInstance
+        .post(`/admin/invoices/add`, {
+          distributor: distributor?._id,
+          products,
+          totalCost,
+          due_date,
+          invoice_date
+        })
+        .then(res => res.data)
+      const res = await axiosInstance.get(`/admin/invoices/download-pdf`, {
+        responseType: 'blob',
+        params: { id: response.invoice._id }
+      })
+      console.log('🚀 ~ onSubmitAndSavePdf ~ res:', res)
+      setIsLoading(false)
+      const fileURL = window.URL.createObjectURL(res.data)
+      const alink = document.createElement('a')
+      alink.href = fileURL
+      alink.download = `${response.invoice.distributor.name}.pdf`
+      alink.click()
+      window.URL.revokeObjectURL(fileURL)
+    } catch (error: any) {
+      console.log('🚀 ~ onSubmitAndSavePdf ~ error:', error)
+    }
+
+    // if (invoiceId)
+    //   updateInvoiceMutation.mutate({
+    //     _id: invoiceId,
+    //     distributorId: distributor?._id,
+    //     products: products,
+    //     totalCost: totalCost,
+    //     due_date,
+    //     invoice_date
+    //   })
+    // else
+    //   addInvoiceMutation.mutate({
+    //     distributorId: distributor?._id,
+    //     products: products,
+    //     totalCost: totalCost,
+    //     due_date,
+    //     invoice_date
+    //   })
   }
 
   //use Query for Product searching
@@ -226,6 +275,12 @@ const InvoiceAddAndEditCard = ({ params }: { params?: { invoiceId: string } }) =
     mutationFn: AdminInvoiceService.updateInvoice,
     onSuccess: handleUpdateInvoiceSuccess,
     onError: handleUpdateInvoiceError
+  })
+
+  const addAndSaveInvoicePdfMutation = useMutation({
+    mutationFn: AdminInvoiceService.addAndSaveInvoicePdf,
+    onSuccess: handleAddInvoiceSuccess,
+    onError: handleAddInvoiceError
   })
 
   function handleUpdateInvoiceSuccess(data: any) {
@@ -577,7 +632,7 @@ const InvoiceAddAndEditCard = ({ params }: { params?: { invoiceId: string } }) =
           </Grid>
 
           <Grid item xs={12} md={3}>
-            <AddActions onSubmit={handleSubmit(onSubmit)} />
+            <AddActions onSubmit={handleSubmit(onSubmit)} onSubmitAndSavePdf={handleSubmit(onSubmitAndSavePdf)} />
           </Grid>
         </Grid>
       </FormProvider>
