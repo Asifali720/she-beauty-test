@@ -4,6 +4,8 @@ import { useState } from 'react'
 // Next Imports
 import { useRouter } from 'next/navigation'
 
+import html2pdf from 'html2pdf.js'
+
 import Image from 'next/image'
 
 import Link from 'next/link'
@@ -170,23 +172,73 @@ const InvoiceTable = () => {
     setDistributorInvoiceId(id)
   }
 
-  const handleDownloadInvoicePdf = async (id: string, name: string) => {
-    try {
-      setIsLoadingSpinner(true)
-      const response = await axiosInstance.get(`/admin/invoices/download-pdf`, {
-        responseType: 'blob',
-        params: { id }
-      })
-      setIsLoadingSpinner(false)
-      const fileURL = window.URL.createObjectURL(response.data)
-      const alink = document.createElement('a')
-      alink.href = fileURL
-      alink.download = `${name}.pdf`
-      alink.click()
-      window.URL.revokeObjectURL(fileURL)
-    } catch (error) {
-      console.error('Error downloading PDF:', error)
+  // const handleDownloadInvoicePdf = async (id: string, name: string) => {
+  //   try {
+  //     setIsLoadingSpinner(true)
+  //     const response = await axiosInstance.get(`/admin/invoices/download-pdf`, {
+  //       responseType: 'blob',
+  //       params: { id }
+  //     })
+  //     setIsLoadingSpinner(false)
+  //     const fileURL = window.URL.createObjectURL(response.data)
+  //     const alink = document.createElement('a')
+  //     alink.href = fileURL
+  //     alink.download = `${name}.pdf`
+  //     alink.click()
+  //     window.URL.revokeObjectURL(fileURL)
+  //   } catch (error) {
+  //     console.error('Error downloading PDF:', error)
+  //   }
+  // }
+
+  const handleTest = async () => {
+    const options = {
+      filename: 'Invoice.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
     }
+    let html = `<h1 style="text-align: center; font-size: 52px; margin: 0; color: red">Hello World</h1>`
+
+    html2pdf()
+      .from(html)
+      .set(options)
+      .toPdf()
+      .get('pdf')
+      .then((pdf: any) => {
+        pdf.send('Invoice.pdf')
+      })
+  }
+
+  const handleSendPdfEmail = async () => {
+    const options = {
+      filename: 'Invoice.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+    }
+    let html = `<h1 style="text-align: center; font-size: 52px; margin: 0; color: red">Hello World</h1>`
+    html2pdf()
+      .from(html)
+      .set(options)
+      .toPdf()
+      .outputPdf('blob')
+      .then((pdfBlob: any) => {
+        const formData = new FormData()
+        formData.append('file', pdfBlob, 'invoice.pdf')
+
+        axiosInstance
+          .post('/admin/test', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          })
+          .then(response => {
+            console.log('PDF sent successfully:', response.data)
+            toast.success('PDF sent on email successfully')
+          })
+          .catch(error => {
+            console.error('Error sending PDF:', error)
+          })
+      })
   }
 
   return (
@@ -291,16 +343,20 @@ const InvoiceTable = () => {
                     </IconButton>
                     <IconButton
                       style={{ rotate: '-45deg' }}
-                      onClick={() => handleOpenDrawerAndSetInvoiceId(row?._id ? row?._id : '')}
+                      onClick={() =>
+                        // handleOpenDrawerAndSetInvoiceId(row?._id ? row?._id : '')
+                        handleSendPdfEmail()
+                      }
                     >
                       <Icon icon='mdi:send' />
                     </IconButton>
                     <IconButton
                       onClick={() =>
-                        handleDownloadInvoicePdf(
-                          row?._id ? row?._id : '',
-                          row?.distributor?.name ? row?.distributor?.name : ''
-                        )
+                        // handleDownloadInvoicePdf(
+                        //   row?._id ? row?._id : '',
+                        //   row?.distributor?.name ? row?.distributor?.name : ''
+                        // )
+                        handleTest()
                       }
                     >
                       <Icon icon='mdi:download' />
