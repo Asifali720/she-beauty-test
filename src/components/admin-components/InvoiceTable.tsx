@@ -4,8 +4,6 @@ import { useState } from 'react'
 // Next Imports
 import { useRouter } from 'next/navigation'
 
-import html2pdf from 'html2pdf.js'
-
 import Image from 'next/image'
 
 import Link from 'next/link'
@@ -36,6 +34,7 @@ import { ImageViewDialogBox } from '.'
 import type { DateRange } from '@/types/date'
 import InvoiceDrawer from './InvoiceDrawer'
 import { axiosInstance } from '@/services/axiosCofig'
+import html2pdf from 'html2pdf.js'
 
 const InvoiceTable = () => {
   // ** States
@@ -206,7 +205,7 @@ const InvoiceTable = () => {
       .toPdf()
       .get('pdf')
       .then((pdf: any) => {
-        pdf.send('Invoice.pdf')
+        pdf.save('Invoice.pdf')
       })
   }
 
