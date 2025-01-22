@@ -3,6 +3,9 @@
   functions = "netlify/functions"
   publish = ".next"
 
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
   ## Specify the Node.js version to use
   [build.environment]
   NODE_VERSION = "20.18.1"
