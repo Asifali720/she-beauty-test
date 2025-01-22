@@ -1,4 +1,4 @@
-import * as pdf from 'html-pdf-node'
+import playwright from 'playwright'
 
 import { formatTime } from '@/@core/utils/format'
 
@@ -107,8 +107,17 @@ export async function createDistributorPdf({ distributor, mergedData, startDate,
 
   html += `</body></html>`
 
-  const options = { format: 'A4', margin: { top: 25, bottom: 25, right: 25, left: 25 } }
-  const pdfBuffer = await pdf.generatePdf({ content: html }, options)
+  const browser = await playwright.chromium.launch()
+  const context = await browser.newContext()
+  const page = await context.newPage()
+
+  await page.setContent(html, { waitUntil: 'domcontentloaded' })
+  const pdfBuffer = await page.pdf({
+    format: 'A4',
+    margin: { top: '25px', bottom: '25px', right: '25px', left: '25px' }
+  })
+
+  await browser.close()
 
   return pdfBuffer
 }

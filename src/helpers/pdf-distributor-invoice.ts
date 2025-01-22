@@ -1,4 +1,4 @@
-import * as pdf from 'html-pdf-node'
+import playwright from 'playwright'
 
 export async function createInvoicePdf({ distributor, invoiceItems, invoice, invoiceTotal }: any) {
   const percentagePrice = (invoiceTotal / 100) * 30
@@ -51,20 +51,26 @@ export async function createInvoicePdf({ distributor, invoiceItems, invoice, inv
         </table>
 
         <div style="text-align: right; margin: 20px 0;">
-            <p style="margin: 0;">Sub-Total: $${invoiceTotal}</p>
-            <p style="margin: 0;">Discount (30%): $${percentagePrice}</p>
-            <p style="font-size: 18px; font-weight: bold; margin: 0;">TOTAL: $${invoiceTotal - percentagePrice}</p>
+            <p style="margin: 0;">Sub-Total: Rs.${invoiceTotal}</p>
+            <p style="margin: 0;">Discount (30%): Rs.${percentagePrice}</p>
+            <p style="font-size: 18px; font-weight: bold; margin: 0;">TOTAL: Rs.${invoiceTotal - percentagePrice}</p>
         </div>
         <p>Thank you for your business.</p>
     </div>
 </body>
 </html>`
 
-  const options = {
+  const browser = await playwright.chromium.launch()
+  const context = await browser.newContext()
+  const page = await context.newPage()
+
+  await page.setContent(html, { waitUntil: 'domcontentloaded' })
+  const pdfBuffer = await page.pdf({
     format: 'A4',
-    margin: { top: 25, bottom: 25, right: 25, left: 25 }
-  }
-  const pdfBuffer = await pdf.generatePdf({ content: html }, options)
+    margin: { top: '25px', bottom: '25px', right: '25px', left: '25px' }
+  })
+
+  await browser.close()
 
   return pdfBuffer
 }

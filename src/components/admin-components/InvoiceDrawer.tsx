@@ -99,8 +99,8 @@ const InvoiceDrawer = ({ open, handleClose, invoiceId }: Props) => {
   function handleExportInvoiceError(error: any) {
     setIsLoading(false)
 
-    if (error.response.data.error)
-      toast.error(error.response.data.error || 'Oops! something went wrong.please try again later.')
+    if (error.response.data.error) console.log(error.response.data.error, '>>> play write error')
+    toast.error(error.response.data.error || 'Oops! something went wrong.please try again later.')
   }
 
   return (

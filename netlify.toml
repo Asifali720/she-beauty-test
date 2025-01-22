@@ -6,7 +6,6 @@
   ## Specify the Node.js version to use
   [build.environment]
   NODE_VERSION = "20.18.1"
-  PUPPETEER_SKIP_CHROMIUM_DOWNLOAD = "true" # Ensures Chromium is downloaded
 
   ## Uncomment to use this redirect for Single Page Applications like create-react-app.
   ## Not needed for static site generators.
