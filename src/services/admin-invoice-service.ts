@@ -21,14 +21,15 @@ export const getInvoicesItem = (_id: string) => {
   return axiosInstance.get(`/admin/invoices/invoice-items?invoice_id=${_id}`).then(res => res.data)
 }
 
-export const addInvoice = ({ distributorId, products, totalCost, due_date, invoice_date }: Invoice) => {
-  return axiosInstance
+export const addInvoice = async ({ distributorId, products, totalCost, due_date, invoice_date }: Invoice) => {
+  const response = await axiosInstance
     .post(`/admin/invoices/add`, { distributor: distributorId, products, totalCost, due_date, invoice_date })
     .then(res => res.data)
+  return response
 }
 
-export const updateInvoice = ({ _id, distributorId, products, totalCost, due_date, invoice_date }: Invoice) => {
-  return axiosInstance
+export const updateInvoice = async ({ _id, distributorId, products, totalCost, due_date, invoice_date }: Invoice) => {
+  const response = await axiosInstance
     .post(`/admin/invoices/update`, {
       invoiceId: _id,
       distributor: distributorId,
@@ -38,6 +39,7 @@ export const updateInvoice = ({ _id, distributorId, products, totalCost, due_dat
       invoice_date
     })
     .then(res => res.data)
+  return response
 }
 
 export const searchInvoices = (search: string | undefined) => {
@@ -52,7 +54,7 @@ export const getInvoiceById = (invoiceId: string | undefined) => {
   return axiosInstance.get(`/admin/invoices/by-id?id=${invoiceId}`)
 }
 
-export const exportDistributorInvoice = ({ invoiceId, fileType, email }: DistributorInvoice) => {
+export const exportDistributorInvoice = async ({ invoiceId, fileType, email }: DistributorInvoice) => {
   return axiosInstance
     .post(`/admin/invoices/distributor`, {
       id: invoiceId,
@@ -62,30 +64,20 @@ export const exportDistributorInvoice = ({ invoiceId, fileType, email }: Distrib
     .then(res => res.data)
 }
 
-export const addAndSaveInvoicePdf = async ({ distributorId, products, totalCost, due_date, invoice_date }: Invoice) => {
-  const response = await axiosInstance
-    .post(`/admin/invoices/add`, {
-      distributor: distributorId,
-      products,
-      totalCost,
-      due_date,
-      invoice_date
+export const getSingleInvoiceData = async (id: string) => {
+  try {
+    const response = await axiosInstance.get('/admin/invoices/single-invoice', {
+      params: { id }
     })
-    .then(res => res.data)
+    return response
+  } catch (error) {
+    console.log('🚀 ~ getSingleInvoiceData ~ error:', error)
+  }
+}
 
-  console.log(response, '>>>>> response addAndSave')
-
-  return axiosInstance
-    .get(`/admin/invoices/download-pdf`, {
-      responseType: 'blob',
-      params: { id: response.invoice._id }
-    })
-    .then(res => {
-      const fileURL = window.URL.createObjectURL(res.data)
-      const alink = document.createElement('a')
-      alink.href = fileURL
-      alink.download = `${response.distributor.name}.pdf`
-      alink.click()
-      window.URL.revokeObjectURL(fileURL)
-    })
+export const sendInvoicePdfEmail = async (formData: any) => {
+  const response = await axiosInstance.post('/admin/send-pdf-email', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+  return response
 }

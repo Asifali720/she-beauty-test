@@ -5,7 +5,6 @@ import { z } from 'zod'
 
 import { connect } from '@/configs/dbconfig'
 import { sendEmail } from '@/helpers/mailer'
-import { createDistributorPdf } from '@/helpers/pdf-distributor-ledger'
 
 import ReceivedPaymentModel from '@/models/receivedPayment.model'
 import InvoiceModal from '@/models/invoice.model'
@@ -105,13 +104,7 @@ export async function POST(request: NextRequest) {
     ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
     if (fileType === 'pdf') {
-      const pdfBytes = await createDistributorPdf({ distributor, mergedData, startDate, endDate })
-
-      if (pdfBytes === undefined) {
-        throw new Error('Failed to generate PDF bytes')
-      }
-
-      await sendEmail({ email, emailType: 'LEDGER', startDate, endDate, pdfBytes: pdfBytes, fileType })
+      return NextResponse.json({ success: true, data: { distributor, mergedData, startDate, endDate } })
     } else if (fileType === 'csv') {
       const csvBytes = createDistributorCsv({ mergedData })
 
@@ -120,12 +113,11 @@ export async function POST(request: NextRequest) {
       }
 
       await sendEmail({ email, emailType: 'LEDGER', startDate, endDate, pdfBytes: csvBytes, fileType })
+      return NextResponse.json({
+        success: true,
+        message: `Ledger report has been sent to ${email} successfully`
+      })
     }
-
-    return NextResponse.json({
-      success: true,
-      message: `Ledger report has been sent to ${email} successfully`
-    })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }

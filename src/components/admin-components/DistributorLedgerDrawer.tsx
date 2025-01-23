@@ -19,6 +19,7 @@ import Drawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
+import { formatTime } from '@/@core/utils/format'
 
 // Component Imports
 import { MenuItem } from '@mui/material'
@@ -29,6 +30,10 @@ import { AdminLedgerService } from '@/services'
 import { EMAIL_REGX } from '@/utils/emailRegex'
 import type { DateRange } from '@/types/date'
 import type { DistributorLedger } from '@/types/ledger'
+import { exportDistributorLedger } from '@/services/admin-ledger-service'
+import { ledgerDistributorPdfHtmlTemplate } from '@/frontend-pdf-templates/ledgerDistributerPdfHtmlTemplate'
+import { sendInvoicePdfEmail } from '@/services/admin-invoice-service'
+import html2pdf from 'html2pdf.js'
 
 type Props = {
   open: boolean
@@ -65,13 +70,52 @@ const DistributorLedgerDrawer = ({ open, handleClose, distributorId }: Props) =>
     resolver: yupResolver(schema)
   })
 
-  const onSubmit = (data: DistributorLedger) => {
+  const onSubmit = async (data: DistributorLedger) => {
     const { email, fileType } = data
 
     if (distributorId && fileType && email && dateRange) {
       setIsLoading(true)
 
-      exportLedgerMutation.mutate({ distributorId, fileType, email, dateRange })
+      const res = await exportDistributorLedger({ distributorId, fileType, email, dateRange })
+
+      if (res?.data) {
+        console.log('🚀 ~ onSubmit ~ res: ledger', res?.data)
+        const htmlContent = ledgerDistributorPdfHtmlTemplate({
+          distributor: res?.data?.distributor,
+          mergedData: res?.data?.mergedData,
+          startDate: res?.data?.startDate,
+          endDate: res?.data?.endDate
+        })
+
+        const options = {
+          filename: 'Invoice.pdf',
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 4, useCORS: true },
+          jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        }
+
+        const pdfBlob = await html2pdf().from(htmlContent).set(options).toPdf().outputPdf('blob')
+        const formData = new FormData()
+        formData.append('file', pdfBlob, 'invoice.pdf')
+        formData.append('email', email || '')
+        formData.append('fileType', fileType || '')
+        formData.append('emailType', 'LEDGER')
+        formData.append('startDate', formatTime(res?.data.startDate) || '')
+        formData.append('endDate', formatTime(res?.data?.endDate) || '')
+
+        setIsLoading(false)
+
+        try {
+          const emailResponse = await sendInvoicePdfEmail(formData)
+          console.log(emailResponse, '<<< emailResponse')
+          toast.success(emailResponse?.data?.message)
+        } catch (emailError) {
+          console.error('Error sending email:', emailError)
+          toast.error('Failed to send the email. Please try again.')
+        }
+      } else {
+        exportLedgerMutation.mutate({ distributorId, fileType, email, dateRange })
+      }
     }
   }
 

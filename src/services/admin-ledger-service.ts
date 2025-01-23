@@ -13,8 +13,8 @@ export const exportVendorLedger = ({ vendorId, fileType, email, dateRange }: Ven
     .then(res => res.data)
 }
 
-export const exportDistributorLedger = ({ distributorId, fileType, email, dateRange }: DistributorLedger) => {
-  return axiosInstance
+export const exportDistributorLedger = async ({ distributorId, fileType, email, dateRange }: DistributorLedger) => {
+  const response = await axiosInstance
     .post(`/admin/ledger/distributor`, {
       id: distributorId,
       fileType,
@@ -23,4 +23,5 @@ export const exportDistributorLedger = ({ distributorId, fileType, email, dateRa
       endDate: dateRange?.endDate
     })
     .then(res => res.data)
+  return response
 }

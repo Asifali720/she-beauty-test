@@ -28,6 +28,9 @@ import { Spinner } from '.'
 import { AdminInvoiceService } from '@/services'
 import { EMAIL_REGX } from '@/utils/emailRegex'
 import type { DistributorInvoice } from '@/types/invoice'
+import { invoicePdfHtmlTemplate } from '@/frontend-pdf-templates/invoicePdfHtmlTemplate'
+import html2pdf from 'html2pdf.js'
+import { getSingleInvoiceData, sendInvoicePdfEmail } from '@/services/admin-invoice-service'
 
 type Props = {
   open: boolean
@@ -64,13 +67,52 @@ const InvoiceDrawer = ({ open, handleClose, invoiceId }: Props) => {
     resolver: yupResolver(schema)
   })
 
-  const onSubmit = (data: DistributorInvoice) => {
+  const onSubmit = async (data: DistributorInvoice) => {
     const { email, fileType } = data
 
     if (invoiceId && fileType && email) {
       setIsLoading(true)
 
-      exportInvoiceMutation.mutate({ invoiceId, fileType, email })
+      try {
+        const response = await getSingleInvoiceData(invoiceId)
+
+        const options = {
+          filename: 'Invoice.pdf',
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 4 },
+          jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        }
+
+        const htmlContent = invoicePdfHtmlTemplate({
+          distributor: response?.data?.data?.distributor,
+          invoice: response?.data?.data?.invoice,
+          invoiceItems: response?.data?.data?.invoiceItems,
+          invoiceTotal: response?.data?.data?.invoiceTotal
+        })
+
+        const pdfBlob = await html2pdf().from(htmlContent).set(options).toPdf().outputPdf('blob')
+
+        const formData = new FormData()
+        formData.append('file', pdfBlob, 'invoice.pdf')
+        formData.append('email', email || '')
+        formData.append('fileType', fileType || '')
+        formData.append('invoice_number', response?.data?.data?.invoice?.invoice_number || '')
+        formData.append('emailType', 'INVOICE')
+
+        try {
+          const emailResponse = await sendInvoicePdfEmail(formData)
+          console.log(emailResponse, '<<< emailResponse')
+          toast.success(emailResponse?.data?.message)
+        } catch (emailError) {
+          console.error('Error sending email:', emailError)
+          toast.error('Failed to send the email. Please try again.')
+        }
+      } catch (error) {
+        console.error('Error fetching invoice or generating PDF:', error)
+        toast.error('An error occurred while processing the request. Please try again.')
+      } finally {
+        setIsLoading(false)
+      }
     }
   }
 
@@ -163,7 +205,6 @@ const InvoiceDrawer = ({ open, handleClose, invoiceId }: Props) => {
                   {...(errors.fileType && { helperText: errors.fileType.message })}
                 >
                   <MenuItem value='pdf'>Pdf</MenuItem>
-                  <MenuItem value='csv'>Csv</MenuItem>
                 </CustomTextField>
               )}
             />

@@ -43,7 +43,9 @@ import type { Distributor } from '@/types/distributor'
 import Spinner from './Spinner'
 import { validateUniqueSKU } from '@/helpers/uniqueSku'
 import AppReactDatepicker from '@/libs/styles/AppReactDatepicker'
-import { axiosInstance } from '@/services/axiosCofig'
+import { addInvoice, getSingleInvoiceData, updateInvoice } from '@/services/admin-invoice-service'
+import { invoicePdfHtmlTemplate } from '@/frontend-pdf-templates/invoicePdfHtmlTemplate'
+import html2pdf from 'html2pdf.js'
 
 const productSchema = yup
   .array(
@@ -181,50 +183,75 @@ const InvoiceAddAndEditCard = ({ params }: { params?: { invoiceId: string } }) =
   const onSubmitAndSavePdf = async (data: Invoice) => {
     try {
       const { distributor, products, due_date, invoice_date } = data
-      setIsLoading(true)
-
-      const response = await axiosInstance
-        .post(`/admin/invoices/add`, {
-          distributor: distributor?._id,
-          products,
-          totalCost,
+      if (invoiceId) {
+        setIsLoading(true)
+        const res = await updateInvoice({
+          _id: invoiceId,
+          distributorId: distributor?._id,
+          products: products,
+          totalCost: totalCost,
           due_date,
           invoice_date
         })
-        .then(res => res.data)
-      const res = await axiosInstance.get(`/admin/invoices/download-pdf`, {
-        responseType: 'blob',
-        params: { id: response.invoice._id }
-      })
-      console.log('🚀 ~ onSubmitAndSavePdf ~ res:', res)
-      setIsLoading(false)
-      const fileURL = window.URL.createObjectURL(res.data)
-      const alink = document.createElement('a')
-      alink.href = fileURL
-      alink.download = `${response.invoice.distributor.name}.pdf`
-      alink.click()
-      window.URL.revokeObjectURL(fileURL)
+        const response = await getSingleInvoiceData(res?.invoice?._id)
+        const options = {
+          filename: 'Invoice.pdf',
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 4 },
+          jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        }
+        const htmlContent = invoicePdfHtmlTemplate({
+          distributor: response?.data?.data?.distributor,
+          invoice: response?.data?.data?.invoice,
+          invoiceItems: response?.data?.data?.invoiceItems,
+          invoiceTotal: response?.data?.data?.invoiceTotal
+        })
+        html2pdf()
+          .from(htmlContent)
+          .set(options)
+          .toPdf()
+          .get('pdf')
+          .then((pdf: any) => {
+            pdf.save(`${response?.data?.data?.distributor?.name}.pdf`)
+          })
+        toast.success('Invoice updated successfully')
+        setIsLoading(false)
+      } else {
+        setIsLoading(true)
+        const res = await addInvoice({
+          distributorId: distributor?._id,
+          products: products,
+          totalCost: totalCost,
+          due_date,
+          invoice_date
+        })
+        const response = await getSingleInvoiceData(res?.invoice?._id)
+        const options = {
+          filename: 'Invoice.pdf',
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 4 },
+          jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        }
+        const htmlContent = invoicePdfHtmlTemplate({
+          distributor: response?.data?.data?.distributor,
+          invoice: response?.data?.data?.invoice,
+          invoiceItems: response?.data?.data?.invoiceItems,
+          invoiceTotal: response?.data?.data?.invoiceTotal
+        })
+        html2pdf()
+          .from(htmlContent)
+          .set(options)
+          .toPdf()
+          .get('pdf')
+          .then((pdf: any) => {
+            pdf.save(`${response?.data?.data?.distributor?.name}.pdf`)
+          })
+        toast.success('Invoice created successfully')
+        setIsLoading(false)
+      }
     } catch (error: any) {
       console.log('🚀 ~ onSubmitAndSavePdf ~ error:', error)
     }
-
-    // if (invoiceId)
-    //   updateInvoiceMutation.mutate({
-    //     _id: invoiceId,
-    //     distributorId: distributor?._id,
-    //     products: products,
-    //     totalCost: totalCost,
-    //     due_date,
-    //     invoice_date
-    //   })
-    // else
-    //   addInvoiceMutation.mutate({
-    //     distributorId: distributor?._id,
-    //     products: products,
-    //     totalCost: totalCost,
-    //     due_date,
-    //     invoice_date
-    //   })
   }
 
   //use Query for Product searching
@@ -275,12 +302,6 @@ const InvoiceAddAndEditCard = ({ params }: { params?: { invoiceId: string } }) =
     mutationFn: AdminInvoiceService.updateInvoice,
     onSuccess: handleUpdateInvoiceSuccess,
     onError: handleUpdateInvoiceError
-  })
-
-  const addAndSaveInvoicePdfMutation = useMutation({
-    mutationFn: AdminInvoiceService.addAndSaveInvoicePdf,
-    onSuccess: handleAddInvoiceSuccess,
-    onError: handleAddInvoiceError
   })
 
   function handleUpdateInvoiceSuccess(data: any) {
