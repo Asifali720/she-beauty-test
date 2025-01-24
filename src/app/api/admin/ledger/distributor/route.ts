@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
     if (fileType === 'pdf') {
       return NextResponse.json({ success: true, data: { distributor, mergedData, startDate, endDate } })
     } else if (fileType === 'csv') {
-      const csvBytes = createDistributorCsv({ mergedData })
+      const csvBytes = await createDistributorCsv({ mergedData })
 
       if (!csvBytes) {
         throw new Error('Failed to generate CSV bytes')

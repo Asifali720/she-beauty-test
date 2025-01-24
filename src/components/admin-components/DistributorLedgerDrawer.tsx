@@ -115,7 +115,6 @@ const DistributorLedgerDrawer = ({ open, handleClose, distributorId }: Props) =>
         }
       } else if (fileType === 'csv') {
         try {
-          // console.log('csv function call')
           const res = await exportDistributorLedger({ distributorId, fileType, email, dateRange })
           setIsLoading(false)
           toast.success(res?.message)

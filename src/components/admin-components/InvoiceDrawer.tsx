@@ -126,11 +126,11 @@ const InvoiceDrawer = ({ open, handleClose, invoiceId }: Props) => {
   }
 
   //export Ledger mutation
-  const exportInvoiceMutation = useMutation({
-    mutationFn: AdminInvoiceService.exportDistributorInvoice,
-    onSuccess: handleExportInvoiceSuccess,
-    onError: handleExportInvoiceError
-  })
+  // const exportInvoiceMutation = useMutation({
+  //   mutationFn: AdminInvoiceService.exportDistributorInvoice,
+  //   onSuccess: handleExportInvoiceSuccess,
+  //   onError: handleExportInvoiceError
+  // })
 
   function handleExportInvoiceSuccess(data: any) {
     if (data?.message) {

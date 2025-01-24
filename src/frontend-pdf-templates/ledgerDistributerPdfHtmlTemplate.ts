@@ -1,12 +1,6 @@
 import { formatTime } from '@/@core/utils/format'
-import SheBeautyLogo from '../assets/images/she-beauty-logo.png'
 
 export function ledgerDistributorPdfHtmlTemplate({ distributor, mergedData, startDate, endDate, base64Logo }: any) {
-  // eslint-disable-next-line import/no-named-as-default-member
-
-  // const SheBeautyLogo =
-  //   'https://firebasestorage.googleapis.com/v0/b/she-beauty-6cb28.appspot.com/o/image%2F11f2cf7c-d8bd-4f0d-a8cf-b14eac5adf56.png?alt=media&token=ee5d57de-cb5a-4fc9-91c8-de05df16ec19'
-
   const data = [
     { key: 'Distributor Name', value: distributor?.name || 'N/A' },
     { key: 'Email', value: distributor?.email || 'N/A' },
@@ -25,8 +19,14 @@ export function ledgerDistributorPdfHtmlTemplate({ distributor, mergedData, star
     <head>
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
-        body {
+        html, body {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
           font-family: 'Poppins', sans-serif;
+        }
+        .container {
+          padding: 40px;
         }
         h1 {
           text-align: center;
@@ -36,7 +36,6 @@ export function ledgerDistributorPdfHtmlTemplate({ distributor, mergedData, star
         table {
           width: 100%;
           border-collapse: collapse;
-
         }
         th, td {
           border: 1px solid black;
@@ -46,27 +45,44 @@ export function ledgerDistributorPdfHtmlTemplate({ distributor, mergedData, star
         th {
           font-weight: 600;
         }
-
-
+        .info-row {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 10px;
+        }
+        .info-row span {
+          font-size: 14px;
+        }
+        .info-key {
+          font-weight: 600;
+          width: 170px;
+          color: black;
+        }
+        .info-value {
+          font-weight: 400;
+          color: black;
+        }
       </style>
     </head>
     <body>
+      <div class="container">
+        <div style="text-align: center; margin-bottom: 40px;">
+          <img src="${base64Logo}" alt="SheBeauty Logo" style="max-width:100px; max-height:100px;" />
+        </div>
 
-  <div style="display: flex; flex-direction: row; align-items: center; justify-content: center; width: 100%">
-   <img src="${base64Logo}" alt="SheBeauty Logo" style="max-width:100px; max-height:100px; "  />
-  </div>
-
-
-
-      <h1 style='color: black'>Ledger Report</h1>
+        <h1 style="color: black;">Ledger Report</h1>
   `
 
   data.map(item => {
-    html += `   <div style="display: flex; flex-direction: row; align-items: center; gap: 10px; width: 100%; margin-left: 40px">
-      <span style="font-size: 14px; font-weight: 600; display: inline-block; width: 170px; color: black">${item?.key}</span>
-      <span style="font-size: 14px; font-weight: 600;">:</span>
-      <span style="font-size: 14px; font-weight: 400; color: black">${item?.value}</span>
-    </div>`
+    html += `
+      <div class="info-row">
+        <span class="info-key">${item.key}</span>
+        <span>:</span>
+        <span class="info-value">${item.value}</span>
+      </div>
+    `
   })
 
   html += `<div style="margin-bottom: 20px;"></div>`
@@ -74,13 +90,13 @@ export function ledgerDistributorPdfHtmlTemplate({ distributor, mergedData, star
   if (mergedData.length > 0) {
     html += `
       <table>
-          <tr style="color: black">
-             <th width="20%">Invoice No</th>
-              <th width="20%">Type</th>
-              <th width="20%">Amount</th>
-              <th width="20%">Payment At</th>
-              <th width="20%">Created At</th>
-          </tr>
+        <tr style="color: black">
+          <th>Invoice No</th>
+          <th>Type</th>
+          <th>Amount</th>
+          <th>Payment At</th>
+          <th>Created At</th>
+        </tr>
     `
     mergedData.map((row: any) => {
       const amount = row?.invoice_amount || row?.amount || row?.total_cost
@@ -91,32 +107,20 @@ export function ledgerDistributorPdfHtmlTemplate({ distributor, mergedData, star
         row?.invoice_number || row?.adjustment_number || row?.claim_number || row?.received_payment_number
 
       html += `
-          <tr style="color: black">
+        <tr style="color: black">
           <td>${invoice_number || 'N/A'}</td>
-              <td>${row?.type}</td>
-              <td>${amount || 0}</td>
-              <td>${payment_date || 'N/A'}</td>
-              <td>${date || 'N/A'}</td>
-          </tr>
+          <td>${row?.type}</td>
+          <td>${amount || 0}</td>
+          <td>${payment_date || 'N/A'}</td>
+          <td>${date || 'N/A'}</td>
+        </tr>
       `
     })
 
     html += `</table>`
   }
 
-  html += `</body></html>`
+  html += `</div></body></html>`
 
   return html
-}
-
-const logoBase64 = async () => {
-  const response = await fetch(SheBeautyLogo.src)
-  const blob = await response.blob()
-
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onloadend = () => resolve(reader.result) // Base64 string
-    reader.onerror = () => reject(new Error('Error converting to Base64'))
-    reader.readAsDataURL(blob) // Converts blob to Base64
-  })
 }

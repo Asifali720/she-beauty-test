@@ -78,6 +78,7 @@ const VendorLedgerDrawer = ({ open, handleClose, vendorId }: Props) => {
       setIsLoading(true)
       if (fileType === 'pdf') {
         const res = await exportVendorLedger({ vendorId, fileType, email, dateRange })
+        console.log('🚀 ~ onSubmit ~ res:', res)
         const base64Logo = await imageConvertBase64(SheBeautyLogo)
         const htmlContent = vendorPdfHtmlTemplate({
           vendor: res?.data?.vendor,
@@ -106,14 +107,12 @@ const VendorLedgerDrawer = ({ open, handleClose, vendorId }: Props) => {
         try {
           const emailResponse = await sendLegderAndVendorReportPdfEmail(formData)
           setIsLoading(false)
-          console.log(emailResponse, '<<< emailResponse')
           toast.success(emailResponse?.data?.message)
         } catch (emailError) {
           console.error('Error sending email:', emailError)
           toast.error('Failed to send the email. Please try again.')
         }
       } else if (fileType === 'csv') {
-        // console.log('csv function call')
         try {
           const res = await exportVendorLedger({ vendorId, fileType, email, dateRange })
           setIsLoading(false)

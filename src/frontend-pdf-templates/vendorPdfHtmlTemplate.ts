@@ -1,7 +1,6 @@
 import { formatTime } from '@/@core/utils/format'
 
 export function vendorPdfHtmlTemplate({ vendor, mergedData, startDate, endDate, base64Logo }: any) {
-  // eslint-disable-next-line import/no-named-as-default-member
   const data = [
     { key: 'Vendor Name', value: vendor?.name || 'N/A' },
     { key: 'Email', value: vendor?.email || 'N/A' },
@@ -19,8 +18,14 @@ export function vendorPdfHtmlTemplate({ vendor, mergedData, startDate, endDate, 
     <head>
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
-        body {
+        html, body {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
           font-family: 'Poppins', sans-serif;
+        }
+        .container {
+          padding: 50px;
         }
         h1 {
           text-align: center;
@@ -30,7 +35,6 @@ export function vendorPdfHtmlTemplate({ vendor, mergedData, startDate, endDate, 
         table {
           width: 100%;
           border-collapse: collapse;
-
         }
         th, td {
           border: 1px solid black;
@@ -40,27 +44,44 @@ export function vendorPdfHtmlTemplate({ vendor, mergedData, startDate, endDate, 
         th {
           font-weight: 600;
         }
-
-
+        .info-row {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 10px;
+        }
+        .info-row span {
+          font-size: 14px;
+        }
+        .info-key {
+          font-weight: 600;
+          width: 150px;
+          color: black;
+        }
+        .info-value {
+          font-weight: 400;
+          color: black;
+        }
       </style>
     </head>
     <body>
+      <div class="container">
+        <div style="text-align: center; margin-bottom: 40px;">
+          <img src="${base64Logo}" alt="SheBeauty Logo" style="max-width:100px; max-height:100px;" />
+        </div>
 
-  <div style="display: flex; flex-direction: row; align-items: center; justify-content: center; width: 100%">
-   <img src="${base64Logo}" alt="SheBeauty Logo" style="max-width:100px; max-height:100px; "  />
-  </div>
-
-
-
-      <h1 style='color: black;'>Ledger Report</h1>
+        <h1 style="color: black;">Ledger Report</h1>
   `
 
   data.map(item => {
-    html += `   <div style="display: flex; flex-direction: row; align-items: center; gap: 10px; width: 100%; margin-left: 40px">
-      <span style="font-size: 14px; font-weight: 600; display: inline-block; width: 150px; color: black">${item?.key}</span>
-      <span style="font-size: 14px; font-weight: 600;">:</span>
-      <span style="font-size: 14px; font-weight: 400; color: black">${item?.value}</span>
-    </div>`
+    html += `
+      <div class="info-row">
+        <span class="info-key">${item.key}</span>
+        <span>:</span>
+        <span class="info-value">${item.value}</span>
+      </div>
+    `
   })
 
   html += `<div style="margin-bottom: 20px;"></div>`
@@ -68,13 +89,13 @@ export function vendorPdfHtmlTemplate({ vendor, mergedData, startDate, endDate, 
   if (mergedData.length > 0) {
     html += `
       <table>
-          <tr style='color: black'>
-              <th width="20%">Type</th>
-              <th width="20%">Amount</th>
-              <th width="20%">Items Count</th>
-              <th width="20%">Payment At</th>
-              <th width="20%">Created At</th>
-          </tr>
+        <tr style="color: black">
+          <th width="20%">Type</th>
+          <th width="20%">Amount</th>
+          <th width="20%">Items Count</th>
+          <th width="20%">Payment At</th>
+          <th width="20%">Created At</th>
+        </tr>
     `
     mergedData.map((row: any) => {
       const amount = row?.bill_amount || row?.amount
@@ -82,20 +103,20 @@ export function vendorPdfHtmlTemplate({ vendor, mergedData, startDate, endDate, 
       const payment_date = formatTime(row?.payment_date)
 
       html += `
-          <tr style='color: black'>
-              <td>${row?.bill_amount ? 'Bill' : 'Paid Payment'}</td>
-              <td>${amount || 0}</td>
-              <td>${row?.total_items || 0}</td>
-              <td>${payment_date || 'N/A'}</td>
-              <td>${date || 'N/A'}</td>
-          </tr>
+        <tr style="color: black">
+          <td>${row?.bill_amount ? 'Bill' : 'Paid Payment'}</td>
+          <td>${amount || 0}</td>
+          <td>${row?.total_items || 0}</td>
+          <td>${payment_date || 'N/A'}</td>
+          <td>${date || 'N/A'}</td>
+        </tr>
       `
     })
 
     html += `</table>`
   }
 
-  html += `</body></html>`
+  html += `</div></body></html>`
 
   return html
 }
