@@ -25,3 +25,10 @@ export const exportDistributorLedger = async ({ distributorId, fileType, email, 
     .then(res => res.data)
   return response
 }
+
+export const sendLegderReportPdfEmail = async (formData: any) => {
+  const response = await axiosInstance.post('/admin/send-pdf-email', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+  return response
+}

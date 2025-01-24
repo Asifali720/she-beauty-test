@@ -30,10 +30,10 @@ import { AdminLedgerService } from '@/services'
 import { EMAIL_REGX } from '@/utils/emailRegex'
 import type { DateRange } from '@/types/date'
 import type { DistributorLedger } from '@/types/ledger'
-import { exportDistributorLedger } from '@/services/admin-ledger-service'
+import { exportDistributorLedger, sendLegderReportPdfEmail } from '@/services/admin-ledger-service'
 import { ledgerDistributorPdfHtmlTemplate } from '@/frontend-pdf-templates/ledgerDistributerPdfHtmlTemplate'
-import { sendInvoicePdfEmail } from '@/services/admin-invoice-service'
 import html2pdf from 'html2pdf.js'
+import { formatTime } from '@/@core/utils/format'
 
 type Props = {
   open: boolean
@@ -88,10 +88,8 @@ const DistributorLedgerDrawer = ({ open, handleClose, distributorId }: Props) =>
     if (distributorId && fileType && email && dateRange) {
       setIsLoading(true)
 
-      const res = await exportDistributorLedger({ distributorId, fileType, email, dateRange })
-
-      if (res?.data) {
-        console.log('🚀 ~ onSubmit ~ res: ledger', res?.data)
+      if (fileType === 'pdf') {
+        const res = await exportDistributorLedger({ distributorId, fileType, email, dateRange })
         const base64Logo = await logoBase64()
         const htmlContent = ledgerDistributorPdfHtmlTemplate({
           distributor: res?.data?.distributor,
@@ -108,28 +106,35 @@ const DistributorLedgerDrawer = ({ open, handleClose, distributorId }: Props) =>
           jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
         }
 
-        // const pdfBlob = await html2pdf().from(htmlContent).set(options).toPdf().outputPdf('blob')
-        await html2pdf().from(htmlContent).set(options).toPdf().save()
-        // const formData = new FormData()
-        // formData.append('file', pdfBlob, 'invoice.pdf')
-        // formData.append('email', email || '')
-        // formData.append('fileType', fileType || '')
-        // formData.append('emailType', 'LEDGER')
-        // formData.append('startDate', formatTime(res?.data.startDate) || '')
-        // formData.append('endDate', formatTime(res?.data?.endDate) || '')
-
-        setIsLoading(false)
+        const pdfBlob = await html2pdf().from(htmlContent).set(options).toPdf().outputPdf('blob')
+        const formData = new FormData()
+        formData.append('file', pdfBlob, 'invoice.pdf')
+        formData.append('email', email || '')
+        formData.append('fileType', fileType || '')
+        formData.append('emailType', 'LEDGER')
+        formData.append('startDate', formatTime(res?.data.startDate) || '')
+        formData.append('endDate', formatTime(res?.data?.endDate) || '')
 
         try {
-          // const emailResponse = await sendInvoicePdfEmail(formData)
-          // console.log(emailResponse, '<<< emailResponse')
-          // toast.success(emailResponse?.data?.message)
+          const emailResponse = await sendLegderReportPdfEmail(formData)
+          setIsLoading(false)
+          console.log(emailResponse, '<<< emailResponse')
+          toast.success(emailResponse?.data?.message)
         } catch (emailError) {
           console.error('Error sending email:', emailError)
           toast.error('Failed to send the email. Please try again.')
         }
-      } else {
-        exportLedgerMutation.mutate({ distributorId, fileType, email, dateRange })
+      } else if (fileType === 'csv') {
+        try {
+          console.log('csv function call')
+          const res = await exportDistributorLedger({ distributorId, fileType, email, dateRange })
+          setIsLoading(false)
+          toast.success(res?.message)
+        } catch (error: any | string) {
+          throw new Error(error)
+        }
+
+        // exportLedgerMutation.mutate({ distributorId, fileType, email, dateRange })
       }
     }
   }
