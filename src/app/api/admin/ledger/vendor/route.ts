@@ -5,7 +5,6 @@ import { z } from 'zod'
 
 import { connect } from '@/configs/dbconfig'
 import { sendEmail } from '@/helpers/mailer'
-import { createVendorPdf } from '@/helpers/pdf-vendor-ledger'
 
 import BillModel from '@/models/bill.model'
 import BillItemModel from '@/models/billItem.model'
@@ -77,13 +76,7 @@ export async function POST(request: NextRequest) {
     )
 
     if (fileType === 'pdf') {
-      const pdfBytes = await createVendorPdf({ vendor, mergedData, startDate, endDate })
-
-      if (!pdfBytes) {
-        throw new Error('Failed to generate PDF bytes')
-      }
-
-      await sendEmail({ email, emailType: 'LEDGER', startDate, endDate, pdfBytes: pdfBytes, fileType })
+      return NextResponse.json({ success: true, data: { vendor, mergedData, startDate, endDate } })
     } else if (fileType === 'csv') {
       const csvBytes = createVendorCsv({ mergedData })
 
@@ -92,12 +85,11 @@ export async function POST(request: NextRequest) {
       }
 
       await sendEmail({ email, emailType: 'LEDGER', startDate, endDate, pdfBytes: csvBytes, fileType })
+      return NextResponse.json({
+        success: true,
+        message: `Ledger report has been sent to ${email} successfully`
+      })
     }
-
-    return NextResponse.json({
-      success: true,
-      message: `Ledger report has been sent to ${email} successfully`
-    })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }

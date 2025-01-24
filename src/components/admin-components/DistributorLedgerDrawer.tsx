@@ -30,10 +30,11 @@ import { AdminLedgerService } from '@/services'
 import { EMAIL_REGX } from '@/utils/emailRegex'
 import type { DateRange } from '@/types/date'
 import type { DistributorLedger } from '@/types/ledger'
-import { exportDistributorLedger, sendLegderReportPdfEmail } from '@/services/admin-ledger-service'
+import { exportDistributorLedger, sendLegderAndVendorReportPdfEmail } from '@/services/admin-ledger-service'
 import { ledgerDistributorPdfHtmlTemplate } from '@/frontend-pdf-templates/ledgerDistributerPdfHtmlTemplate'
 import html2pdf from 'html2pdf.js'
 import { formatTime } from '@/@core/utils/format'
+import { imageConvertBase64 } from '@/utils/imageConvertBase64'
 
 type Props = {
   open: boolean
@@ -70,18 +71,6 @@ const DistributorLedgerDrawer = ({ open, handleClose, distributorId }: Props) =>
     resolver: yupResolver(schema)
   })
 
-  const logoBase64 = async () => {
-    const response = await fetch(SheBeautyLogo.src)
-    const blob = await response.blob()
-
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onloadend = () => resolve(reader.result) // Base64 string
-      reader.onerror = () => reject(new Error('Error converting to Base64'))
-      reader.readAsDataURL(blob) // Converts blob to Base64
-    })
-  }
-
   const onSubmit = async (data: DistributorLedger) => {
     const { email, fileType } = data
 
@@ -90,7 +79,7 @@ const DistributorLedgerDrawer = ({ open, handleClose, distributorId }: Props) =>
 
       if (fileType === 'pdf') {
         const res = await exportDistributorLedger({ distributorId, fileType, email, dateRange })
-        const base64Logo = await logoBase64()
+        const base64Logo = await imageConvertBase64(SheBeautyLogo)
         const htmlContent = ledgerDistributorPdfHtmlTemplate({
           distributor: res?.data?.distributor,
           mergedData: res?.data?.mergedData,
@@ -108,7 +97,7 @@ const DistributorLedgerDrawer = ({ open, handleClose, distributorId }: Props) =>
 
         const pdfBlob = await html2pdf().from(htmlContent).set(options).toPdf().outputPdf('blob')
         const formData = new FormData()
-        formData.append('file', pdfBlob, 'invoice.pdf')
+        formData.append('file', pdfBlob, 'ledger.pdf')
         formData.append('email', email || '')
         formData.append('fileType', fileType || '')
         formData.append('emailType', 'LEDGER')
@@ -116,7 +105,7 @@ const DistributorLedgerDrawer = ({ open, handleClose, distributorId }: Props) =>
         formData.append('endDate', formatTime(res?.data?.endDate) || '')
 
         try {
-          const emailResponse = await sendLegderReportPdfEmail(formData)
+          const emailResponse = await sendLegderAndVendorReportPdfEmail(formData)
           setIsLoading(false)
           console.log(emailResponse, '<<< emailResponse')
           toast.success(emailResponse?.data?.message)
@@ -126,7 +115,7 @@ const DistributorLedgerDrawer = ({ open, handleClose, distributorId }: Props) =>
         }
       } else if (fileType === 'csv') {
         try {
-          console.log('csv function call')
+          // console.log('csv function call')
           const res = await exportDistributorLedger({ distributorId, fileType, email, dateRange })
           setIsLoading(false)
           toast.success(res?.message)

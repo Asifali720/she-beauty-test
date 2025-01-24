@@ -1,8 +1,8 @@
 import type { VendorLedger, DistributorLedger } from '@/types/ledger'
 import { axiosInstance } from './axiosCofig'
 
-export const exportVendorLedger = ({ vendorId, fileType, email, dateRange }: VendorLedger) => {
-  return axiosInstance
+export const exportVendorLedger = async ({ vendorId, fileType, email, dateRange }: VendorLedger) => {
+  const response = await axiosInstance
     .post(`/admin/ledger/vendor`, {
       id: vendorId,
       fileType,
@@ -11,6 +11,7 @@ export const exportVendorLedger = ({ vendorId, fileType, email, dateRange }: Ven
       endDate: dateRange?.endDate
     })
     .then(res => res.data)
+  return response
 }
 
 export const exportDistributorLedger = async ({ distributorId, fileType, email, dateRange }: DistributorLedger) => {
@@ -26,7 +27,7 @@ export const exportDistributorLedger = async ({ distributorId, fileType, email, 
   return response
 }
 
-export const sendLegderReportPdfEmail = async (formData: any) => {
+export const sendLegderAndVendorReportPdfEmail = async (formData: any) => {
   const response = await axiosInstance.post('/admin/send-pdf-email', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   })

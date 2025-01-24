@@ -29,6 +29,12 @@ import { AdminLedgerService } from '@/services'
 import { EMAIL_REGX } from '@/utils/emailRegex'
 import type { DateRange } from '@/types/date'
 import type { VendorLedger } from '@/types/ledger'
+import SheBeautyLogo from '../../assets/images/she-beauty-logo.png'
+import html2pdf from 'html2pdf.js'
+import { exportVendorLedger, sendLegderAndVendorReportPdfEmail } from '@/services/admin-ledger-service'
+import { imageConvertBase64 } from '@/utils/imageConvertBase64'
+import { vendorPdfHtmlTemplate } from '@/frontend-pdf-templates/vendorPdfHtmlTemplate'
+import { formatTime } from '@/@core/utils/format'
 
 type Props = {
   open: boolean
@@ -65,13 +71,59 @@ const VendorLedgerDrawer = ({ open, handleClose, vendorId }: Props) => {
     resolver: yupResolver(schema)
   })
 
-  const onSubmit = (data: VendorLedger) => {
+  const onSubmit = async (data: VendorLedger) => {
     const { email, fileType } = data
 
     if (vendorId && fileType && email && dateRange) {
       setIsLoading(true)
+      if (fileType === 'pdf') {
+        const res = await exportVendorLedger({ vendorId, fileType, email, dateRange })
+        const base64Logo = await imageConvertBase64(SheBeautyLogo)
+        const htmlContent = vendorPdfHtmlTemplate({
+          vendor: res?.data?.vendor,
+          mergedData: res?.data?.mergedData,
+          startDate: res?.data?.startDate,
+          endDate: res?.data?.endDate,
+          base64Logo
+        })
 
-      exportLedgerMutation.mutate({ vendorId, fileType, email, dateRange })
+        const options = {
+          filename: 'Invoice.pdf',
+          image: { type: 'png', quality: 0.98 },
+          html2canvas: { dpi: 192, letterRendering: true },
+          jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
+        }
+
+        const pdfBlob = await html2pdf().from(htmlContent).set(options).toPdf().outputPdf('blob')
+        const formData = new FormData()
+        formData.append('file', pdfBlob, 'vendor.pdf')
+        formData.append('email', email || '')
+        formData.append('fileType', fileType || '')
+        formData.append('emailType', 'LEDGER')
+        formData.append('startDate', formatTime(res?.data.startDate) || '')
+        formData.append('endDate', formatTime(res?.data?.endDate) || '')
+
+        try {
+          const emailResponse = await sendLegderAndVendorReportPdfEmail(formData)
+          setIsLoading(false)
+          console.log(emailResponse, '<<< emailResponse')
+          toast.success(emailResponse?.data?.message)
+        } catch (emailError) {
+          console.error('Error sending email:', emailError)
+          toast.error('Failed to send the email. Please try again.')
+        }
+      } else if (fileType === 'csv') {
+        // console.log('csv function call')
+        try {
+          const res = await exportVendorLedger({ vendorId, fileType, email, dateRange })
+          setIsLoading(false)
+          toast.success(res?.message)
+        } catch (error: any | string) {
+          throw new Error(error)
+        }
+      }
+
+      // exportLedgerMutation.mutate({ vendorId, fileType, email, dateRange })
     }
   }
 
