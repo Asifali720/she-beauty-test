@@ -75,6 +75,7 @@ const InvoiceDrawer = ({ open, handleClose, invoiceId }: Props) => {
 
       try {
         const response = await getSingleInvoiceData(invoiceId)
+        console.log('🚀 ~ onSubmit ~ response:', response)
 
         const options = {
           filename: 'Invoice.pdf',

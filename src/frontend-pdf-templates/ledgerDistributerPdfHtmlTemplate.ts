@@ -1,11 +1,11 @@
 import { formatTime } from '@/@core/utils/format'
-// import SheBeautyLogo from '../assets/images/she-beauty-logo.png'
+import SheBeautyLogo from '../assets/images/she-beauty-logo.png'
 
-export function ledgerDistributorPdfHtmlTemplate({ distributor, mergedData, startDate, endDate }: any) {
+export function ledgerDistributorPdfHtmlTemplate({ distributor, mergedData, startDate, endDate, base64Logo }: any) {
   // eslint-disable-next-line import/no-named-as-default-member
 
-  const SheBeautyLogo =
-    'https://firebasestorage.googleapis.com/v0/b/she-beauty-6cb28.appspot.com/o/image%2F11f2cf7c-d8bd-4f0d-a8cf-b14eac5adf56.png?alt=media&token=ee5d57de-cb5a-4fc9-91c8-de05df16ec19'
+  // const SheBeautyLogo =
+  //   'https://firebasestorage.googleapis.com/v0/b/she-beauty-6cb28.appspot.com/o/image%2F11f2cf7c-d8bd-4f0d-a8cf-b14eac5adf56.png?alt=media&token=ee5d57de-cb5a-4fc9-91c8-de05df16ec19'
 
   const data = [
     { key: 'Distributor Name', value: distributor?.name || 'N/A' },
@@ -53,7 +53,7 @@ export function ledgerDistributorPdfHtmlTemplate({ distributor, mergedData, star
     <body>
 
   <div style="display: flex; flex-direction: row; align-items: center; justify-content: center; width: 100%">
-   <img src="${SheBeautyLogo}" alt="SheBeauty Logo" style="max-width:100px; max-height:100px; "  />
+   <img src="${base64Logo}" alt="SheBeauty Logo" style="max-width:100px; max-height:100px; "  />
   </div>
 
 
@@ -62,7 +62,7 @@ export function ledgerDistributorPdfHtmlTemplate({ distributor, mergedData, star
   `
 
   data.map(item => {
-    html += `   <div style="display: flex; flex-direction: row; align-items: center; gap: 10px; width: 100%;">
+    html += `   <div style="display: flex; flex-direction: row; align-items: center; gap: 10px; width: 100%; margin-left: 40px">
       <span style="font-size: 14px; font-weight: 600; display: inline-block; width: 170px; color: black">${item?.key}</span>
       <span style="font-size: 14px; font-weight: 600;">:</span>
       <span style="font-size: 14px; font-weight: 400; color: black">${item?.value}</span>
@@ -107,4 +107,16 @@ export function ledgerDistributorPdfHtmlTemplate({ distributor, mergedData, star
   html += `</body></html>`
 
   return html
+}
+
+const logoBase64 = async () => {
+  const response = await fetch(SheBeautyLogo.src)
+  const blob = await response.blob()
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onloadend = () => resolve(reader.result) // Base64 string
+    reader.onerror = () => reject(new Error('Error converting to Base64'))
+    reader.readAsDataURL(blob) // Converts blob to Base64
+  })
 }

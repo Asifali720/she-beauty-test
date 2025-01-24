@@ -174,6 +174,7 @@ const InvoiceTable = () => {
     try {
       setIsLoadingSpinner(true)
       const response = await getSingleInvoiceData(id)
+      console.log('🚀 ~ handleDownloadInvoicePdf ~ response:', response)
       const options = {
         filename: 'Invoice.pdf',
         image: { type: 'jpeg', quality: 0.98 },

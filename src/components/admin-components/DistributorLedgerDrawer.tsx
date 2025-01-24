@@ -19,7 +19,7 @@ import Drawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
 import Divider from '@mui/material/Divider'
-import { formatTime } from '@/@core/utils/format'
+import SheBeautyLogo from '../../assets/images/she-beauty-logo.png'
 
 // Component Imports
 import { MenuItem } from '@mui/material'
@@ -70,6 +70,18 @@ const DistributorLedgerDrawer = ({ open, handleClose, distributorId }: Props) =>
     resolver: yupResolver(schema)
   })
 
+  const logoBase64 = async () => {
+    const response = await fetch(SheBeautyLogo.src)
+    const blob = await response.blob()
+
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onloadend = () => resolve(reader.result) // Base64 string
+      reader.onerror = () => reject(new Error('Error converting to Base64'))
+      reader.readAsDataURL(blob) // Converts blob to Base64
+    })
+  }
+
   const onSubmit = async (data: DistributorLedger) => {
     const { email, fileType } = data
 
@@ -80,35 +92,38 @@ const DistributorLedgerDrawer = ({ open, handleClose, distributorId }: Props) =>
 
       if (res?.data) {
         console.log('🚀 ~ onSubmit ~ res: ledger', res?.data)
+        const base64Logo = await logoBase64()
         const htmlContent = ledgerDistributorPdfHtmlTemplate({
           distributor: res?.data?.distributor,
           mergedData: res?.data?.mergedData,
           startDate: res?.data?.startDate,
-          endDate: res?.data?.endDate
+          endDate: res?.data?.endDate,
+          base64Logo
         })
 
         const options = {
           filename: 'Invoice.pdf',
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 4, useCORS: true },
-          jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+          image: { type: 'png', quality: 0.98 },
+          html2canvas: { dpi: 192, letterRendering: true },
+          jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
         }
 
-        const pdfBlob = await html2pdf().from(htmlContent).set(options).toPdf().outputPdf('blob')
-        const formData = new FormData()
-        formData.append('file', pdfBlob, 'invoice.pdf')
-        formData.append('email', email || '')
-        formData.append('fileType', fileType || '')
-        formData.append('emailType', 'LEDGER')
-        formData.append('startDate', formatTime(res?.data.startDate) || '')
-        formData.append('endDate', formatTime(res?.data?.endDate) || '')
+        // const pdfBlob = await html2pdf().from(htmlContent).set(options).toPdf().outputPdf('blob')
+        await html2pdf().from(htmlContent).set(options).toPdf().save()
+        // const formData = new FormData()
+        // formData.append('file', pdfBlob, 'invoice.pdf')
+        // formData.append('email', email || '')
+        // formData.append('fileType', fileType || '')
+        // formData.append('emailType', 'LEDGER')
+        // formData.append('startDate', formatTime(res?.data.startDate) || '')
+        // formData.append('endDate', formatTime(res?.data?.endDate) || '')
 
         setIsLoading(false)
 
         try {
-          const emailResponse = await sendInvoicePdfEmail(formData)
-          console.log(emailResponse, '<<< emailResponse')
-          toast.success(emailResponse?.data?.message)
+          // const emailResponse = await sendInvoicePdfEmail(formData)
+          // console.log(emailResponse, '<<< emailResponse')
+          // toast.success(emailResponse?.data?.message)
         } catch (emailError) {
           console.error('Error sending email:', emailError)
           toast.error('Failed to send the email. Please try again.')
