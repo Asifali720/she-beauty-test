@@ -15,14 +15,15 @@ connect()
 export async function POST(request: NextRequest) {
   try {
     const reqBody = await request.json()
-    const { distributor, products, totalCost, due_date, invoice_date } = reqBody
+    const { distributor, products, totalCost, due_date, invoice_date, discount } = reqBody
 
     const schema = z.object({
       distributor: z.string(),
       totalCost: z.number(),
       due_date: z.string(),
       invoice_date: z.string(),
-      products: z.array(z.object({ sku: z.string(), qty: z.number(), cost: z.number() }))
+      products: z.array(z.object({ sku: z.string(), qty: z.number(), cost: z.number() })),
+      discount: z.number().optional()
     })
 
     const validationRules = schema.safeParse(reqBody)
@@ -48,7 +49,9 @@ export async function POST(request: NextRequest) {
       distributor,
       due_date,
       invoice_date,
-      status: 'approved'
+      status: 'approved',
+      discount,
+      subtotal: totalCost
     })
 
     const newItems = await isValidProduct(products)

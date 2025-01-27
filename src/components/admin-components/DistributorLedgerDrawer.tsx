@@ -107,7 +107,6 @@ const DistributorLedgerDrawer = ({ open, handleClose, distributorId }: Props) =>
         try {
           const emailResponse = await sendLegderAndVendorReportPdfEmail(formData)
           setIsLoading(false)
-          console.log(emailResponse, '<<< emailResponse')
           toast.success(emailResponse?.data?.message)
         } catch (emailError) {
           console.error('Error sending email:', emailError)

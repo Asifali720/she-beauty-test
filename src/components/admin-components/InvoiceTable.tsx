@@ -67,8 +67,6 @@ const InvoiceTable = () => {
     setPageNo(1)
   }
 
-  console.log('🚀 ~ AdminInvoiceService:', AdminInvoiceService)
-
   //use Query for invoice data
   const { data, error, isLoading, isError, isFetching, refetch } = useQuery({
     queryKey: ['invoices', pageNo, rowsPerPage, dateRange],
@@ -174,7 +172,6 @@ const InvoiceTable = () => {
     try {
       setIsLoadingSpinner(true)
       const response = await getSingleInvoiceData(id)
-      console.log('🚀 ~ handleDownloadInvoicePdf ~ response:', response)
       const options = {
         filename: 'Invoice.pdf',
         image: { type: 'jpeg', quality: 0.98 },
@@ -185,7 +182,8 @@ const InvoiceTable = () => {
         distributor: response?.data?.data?.distributor,
         invoice: response?.data?.data?.invoice,
         invoiceItems: response?.data?.data?.invoiceItems,
-        invoiceTotal: response?.data?.data?.invoiceTotal
+        invoiceTotal: response?.data?.data?.invoiceTotal,
+        discount: response?.data?.data?.invoice?.discount
       })
       html2pdf()
         .from(htmlContent)
@@ -243,7 +241,6 @@ const InvoiceTable = () => {
           <TableRowLoader rowsNum={rowsPerPage} cellsNum={INVOICE_HEAD_DATA.length} />
         ) : (
           (searchInvoice?.data || data)?.invoices?.map((row: Invoice, index: number) => {
-            console.log('🚀 ~ row:', row)
             const { name, photo } = row.distributor!
             const _id = row._id!
 
@@ -284,6 +281,7 @@ const InvoiceTable = () => {
 
                 <StyledTableCell>{row?.total_items || 0}</StyledTableCell>
                 <StyledTableCell>{row?.invoice_amount || 0}</StyledTableCell>
+                <StyledTableCell>{row?.discount || 0}</StyledTableCell>
                 <StyledTableCell>{formatTime(row?.due_date) || 'N/A'}</StyledTableCell>
                 <StyledTableCell>{formatTime(row?.createdAt) || 'N/A'}</StyledTableCell>
                 <StyledTableCell>{formatTime(row?.updatedAt) || 'N/A'}</StyledTableCell>

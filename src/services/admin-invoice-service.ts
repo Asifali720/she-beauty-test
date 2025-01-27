@@ -21,14 +21,29 @@ export const getInvoicesItem = (_id: string) => {
   return axiosInstance.get(`/admin/invoices/invoice-items?invoice_id=${_id}`).then(res => res.data)
 }
 
-export const addInvoice = async ({ distributorId, products, totalCost, due_date, invoice_date }: Invoice) => {
+export const addInvoice = async ({ distributorId, products, totalCost, due_date, invoice_date, discount }: Invoice) => {
   const response = await axiosInstance
-    .post(`/admin/invoices/add`, { distributor: distributorId, products, totalCost, due_date, invoice_date })
+    .post(`/admin/invoices/add`, {
+      distributor: distributorId,
+      products,
+      totalCost,
+      due_date,
+      invoice_date,
+      discount
+    })
     .then(res => res.data)
   return response
 }
 
-export const updateInvoice = async ({ _id, distributorId, products, totalCost, due_date, invoice_date }: Invoice) => {
+export const updateInvoice = async ({
+  _id,
+  distributorId,
+  products,
+  totalCost,
+  due_date,
+  invoice_date,
+  discount
+}: Invoice) => {
   const response = await axiosInstance
     .post(`/admin/invoices/update`, {
       invoiceId: _id,
@@ -36,9 +51,11 @@ export const updateInvoice = async ({ _id, distributorId, products, totalCost, d
       products,
       totalCost,
       due_date,
-      invoice_date
+      invoice_date,
+      discount
     })
     .then(res => res.data)
+  console.log('🚀 ~ response:', response)
   return response
 }
 
@@ -52,16 +69,6 @@ export const deleteInvoice = (invoiceId: string | undefined) => {
 
 export const getInvoiceById = (invoiceId: string | undefined) => {
   return axiosInstance.get(`/admin/invoices/by-id?id=${invoiceId}`)
-}
-
-export const exportDistributorInvoice = async ({ invoiceId, fileType, email }: DistributorInvoice) => {
-  return axiosInstance
-    .post(`/admin/invoices/distributor`, {
-      id: invoiceId,
-      fileType,
-      email
-    })
-    .then(res => res.data)
 }
 
 export const getSingleInvoiceData = async (id: string) => {

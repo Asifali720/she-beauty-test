@@ -75,8 +75,6 @@ export async function POST(request: NextRequest) {
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
 
-    console.log('🚀 ~ POST ~ vendor mergedData:', mergedData)
-
     if (fileType === 'pdf') {
       return NextResponse.json({ success: true, data: { vendor, mergedData, startDate, endDate } })
     } else if (fileType === 'csv') {

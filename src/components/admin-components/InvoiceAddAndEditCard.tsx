@@ -76,7 +76,11 @@ const schema = yup.object().shape({
   }),
   due_date: yup.string().required('Due date is required'),
   invoice_date: yup.string().required('Invoice date is required'),
-  products: productSchema.min(1, 'Atleast one product is required.')
+  products: productSchema.min(1, 'Atleast one product is required.'),
+  discount: yup
+    .number()
+    .transform(value => (Number.isNaN(value) ? null : value))
+    .positive('It must be positive')
 })
 
 const InvoiceAddAndEditCard = ({ params }: { params?: { invoiceId: string } }) => {
@@ -84,6 +88,7 @@ const InvoiceAddAndEditCard = ({ params }: { params?: { invoiceId: string } }) =
 
   const [isLoading, setIsLoading] = useState(false)
   const [distributorInput, setDistributorInput] = useState('')
+  const [discountValue, setDiscountValue] = useState<Number>(0)
 
   //hooks
   const methods = useForm()
@@ -124,7 +129,8 @@ const InvoiceAddAndEditCard = ({ params }: { params?: { invoiceId: string } }) =
         })) || [{ sku: '', qty: 0, cost: 0 }]
       : [{ sku: '', qty: 0, cost: 0 }],
     due_date: invoiceDistributor?.due_date ? invoiceDistributor?.due_date || '' : '',
-    invoice_date: invoiceDistributor?.invoice_date ? invoiceDistributor?.invoice_date || '' : ''
+    invoice_date: invoiceDistributor?.invoice_date ? invoiceDistributor?.invoice_date || '' : '',
+    discount: invoiceDistributor?.discount
   }
 
   //hooks
@@ -158,7 +164,7 @@ const InvoiceAddAndEditCard = ({ params }: { params?: { invoiceId: string } }) =
 
   // Process form data here
   const onSubmit = (data: Invoice) => {
-    const { distributor, products, due_date, invoice_date } = data
+    const { distributor, products, due_date, invoice_date, discount } = data
     setIsLoading(true)
 
     if (invoiceId)
@@ -168,7 +174,8 @@ const InvoiceAddAndEditCard = ({ params }: { params?: { invoiceId: string } }) =
         products: products,
         totalCost: totalCost,
         due_date,
-        invoice_date
+        invoice_date,
+        discount
       })
     else
       addInvoiceMutation.mutate({
@@ -176,13 +183,14 @@ const InvoiceAddAndEditCard = ({ params }: { params?: { invoiceId: string } }) =
         products: products,
         totalCost: totalCost,
         due_date,
-        invoice_date
+        invoice_date,
+        discount
       })
   }
 
   const onSubmitAndSavePdf = async (data: Invoice) => {
     try {
-      const { distributor, products, due_date, invoice_date } = data
+      const { distributor, products, due_date, invoice_date, discount } = data
       if (invoiceId) {
         setIsLoading(true)
         const res = await updateInvoice({
@@ -191,7 +199,8 @@ const InvoiceAddAndEditCard = ({ params }: { params?: { invoiceId: string } }) =
           products: products,
           totalCost: totalCost,
           due_date,
-          invoice_date
+          invoice_date,
+          discount
         })
         const response = await getSingleInvoiceData(res?.invoice?._id)
         const options = {
@@ -204,7 +213,8 @@ const InvoiceAddAndEditCard = ({ params }: { params?: { invoiceId: string } }) =
           distributor: response?.data?.data?.distributor,
           invoice: response?.data?.data?.invoice,
           invoiceItems: response?.data?.data?.invoiceItems,
-          invoiceTotal: response?.data?.data?.invoiceTotal
+          invoiceTotal: response?.data?.data?.invoiceTotal,
+          discount: response?.data?.data?.invoice?.discount
         })
         html2pdf()
           .from(htmlContent)
@@ -223,7 +233,8 @@ const InvoiceAddAndEditCard = ({ params }: { params?: { invoiceId: string } }) =
           products: products,
           totalCost: totalCost,
           due_date,
-          invoice_date
+          invoice_date,
+          discount
         })
         const response = await getSingleInvoiceData(res?.invoice?._id)
         const options = {
@@ -236,7 +247,8 @@ const InvoiceAddAndEditCard = ({ params }: { params?: { invoiceId: string } }) =
           distributor: response?.data?.data?.distributor,
           invoice: response?.data?.data?.invoice,
           invoiceItems: response?.data?.data?.invoiceItems,
-          invoiceTotal: response?.data?.data?.invoiceTotal
+          invoiceTotal: response?.data?.data?.invoiceTotal,
+          discount: response?.data?.data?.invoice?.discount
         })
         html2pdf()
           .from(htmlContent)
@@ -436,6 +448,36 @@ const InvoiceAddAndEditCard = ({ params }: { params?: { invoiceId: string } }) =
                                 />
                               }
                             />
+                          )}
+                        />
+                        <Controller
+                          name={'discount'}
+                          control={control}
+                          rules={{
+                            required: true
+                          }}
+                          render={({ field: { value, onChange, onBlur } }) => (
+                            <div>
+                              <Typography className='font-medium' color='text.primary'>
+                                Discount
+                                {/* <span
+                                  style={{
+                                    color: theme.palette.error.light
+                                  }}
+                                >
+                                  *
+                                </span> */}
+                              </Typography>
+                              <CustomTextField
+                                {...(isBelowMdScreen && { fullWidth: true })}
+                                type='number'
+                                placeholder='0'
+                                value={value ? value : ''}
+                                onBlur={onBlur}
+                                className='mbe-5'
+                                onChange={onChange}
+                              />
+                            </div>
                           )}
                         />
                       </div>
@@ -638,10 +680,16 @@ const InvoiceAddAndEditCard = ({ params }: { params?: { invoiceId: string } }) =
                           </Typography>
                         </div>
                         <Divider className='mlb-2' /> */}
+                        <div className='flex items-center gap-4 justify-between'>
+                          <Typography>Sub Total invoice cost:</Typography>
+                          <Typography className='font-medium' color='text.primary'>
+                            {totalCost > 0 ? `${totalCost} Rs` : 0}
+                          </Typography>
+                        </div>
                         <div className='flex items-center justify-between'>
                           <Typography>Total invoice cost:</Typography>
                           <Typography className='font-medium' color='text.primary'>
-                            {totalCost > 0 ? `${totalCost} Rs` : 0}
+                            {totalCost > 0 ? `${totalCost - (values?.discount || 0)} Rs` : 0}
                           </Typography>
                         </div>
                       </div>

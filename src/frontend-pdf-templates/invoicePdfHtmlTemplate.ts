@@ -1,5 +1,5 @@
-export const invoicePdfHtmlTemplate = ({ distributor, invoiceItems, invoice, invoiceTotal }: any) => {
-  const percentagePrice = (invoiceTotal / 100) * 30
+export const invoicePdfHtmlTemplate = ({ distributor, invoiceItems, invoice, invoiceTotal, discount }: any) => {
+  // const percentagePrice = (invoiceTotal / 100) * 30
   let html = `<html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -29,7 +29,7 @@ export const invoicePdfHtmlTemplate = ({ distributor, invoiceItems, invoice, inv
                 </tr>
             </thead>
             <tbody>
-              ${invoiceItems?.invoiceItems
+              ${invoiceItems
                 ?.map((item: any) => {
                   return `
                       <tr style='color: black'>
@@ -46,8 +46,8 @@ export const invoicePdfHtmlTemplate = ({ distributor, invoiceItems, invoice, inv
 
         <div style="text-align: right; margin: 20px 0;">
             <p style="margin: 0; color: black">Sub-Total: Rs.${invoiceTotal}</p>
-            <p style="margin: 0; color: black">Discount (30%): Rs.${percentagePrice}</p>
-            <p style="font-size: 18px; font-weight: bold; margin: 0; color: black">TOTAL: Rs.${invoiceTotal - percentagePrice}</p>
+            <p style="margin: 0; color: black">Discount: Rs.${discount}</p>
+            <p style="font-size: 18px; font-weight: bold; margin: 0; color: black">TOTAL: Rs.${invoiceTotal - discount}</p>
         </div>
         <p style='color: black'>Thank you for your business.</p>
     </div>

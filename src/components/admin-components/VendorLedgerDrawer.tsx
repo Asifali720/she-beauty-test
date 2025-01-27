@@ -78,7 +78,6 @@ const VendorLedgerDrawer = ({ open, handleClose, vendorId }: Props) => {
       setIsLoading(true)
       if (fileType === 'pdf') {
         const res = await exportVendorLedger({ vendorId, fileType, email, dateRange })
-        console.log('🚀 ~ onSubmit ~ res:', res)
         const base64Logo = await imageConvertBase64(SheBeautyLogo)
         const htmlContent = vendorPdfHtmlTemplate({
           vendor: res?.data?.vendor,

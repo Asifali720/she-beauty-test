@@ -30,6 +30,14 @@ const invoiceSchema = new mongoose.Schema(
     invoice_amount: {
       type: Number,
       default: 0
+    },
+    discount: {
+      type: Number,
+      default: 0
+    },
+    subtotal: {
+      type: Number,
+      default: 0
     }
   },
   {

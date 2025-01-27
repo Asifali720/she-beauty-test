@@ -15,6 +15,7 @@ export type Invoice = {
   distributorPhoto?: any
   due_date?: string
   invoice_date?: string
+  discount?: number
 }
 
 export type InvoiceItems = {

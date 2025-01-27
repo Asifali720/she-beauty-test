@@ -44,8 +44,6 @@ const schema = yup.object().shape({
 })
 
 const InvoiceDrawer = ({ open, handleClose, invoiceId }: Props) => {
-  console.log('🚀 ~ InvoiceDrawer ~ invoiceId:', invoiceId)
-
   //states
 
   const [isLoading, setIsLoading] = useState(false)
@@ -75,7 +73,6 @@ const InvoiceDrawer = ({ open, handleClose, invoiceId }: Props) => {
 
       try {
         const response = await getSingleInvoiceData(invoiceId)
-        console.log('🚀 ~ onSubmit ~ response:', response)
 
         const options = {
           filename: 'Invoice.pdf',
@@ -88,7 +85,8 @@ const InvoiceDrawer = ({ open, handleClose, invoiceId }: Props) => {
           distributor: response?.data?.data?.distributor,
           invoice: response?.data?.data?.invoice,
           invoiceItems: response?.data?.data?.invoiceItems,
-          invoiceTotal: response?.data?.data?.invoiceTotal
+          invoiceTotal: response?.data?.data?.invoiceTotal,
+          discount: response?.data?.data?.invoice?.discount
         })
 
         const pdfBlob = await html2pdf().from(htmlContent).set(options).toPdf().outputPdf('blob')
@@ -102,7 +100,6 @@ const InvoiceDrawer = ({ open, handleClose, invoiceId }: Props) => {
 
         try {
           const emailResponse = await sendInvoicePdfEmail(formData)
-          console.log(emailResponse, '<<< emailResponse')
           toast.success(emailResponse?.data?.message)
         } catch (emailError) {
           console.error('Error sending email:', emailError)
@@ -124,13 +121,6 @@ const InvoiceDrawer = ({ open, handleClose, invoiceId }: Props) => {
 
     setIsLoading(false)
   }
-
-  //export Ledger mutation
-  // const exportInvoiceMutation = useMutation({
-  //   mutationFn: AdminInvoiceService.exportDistributorInvoice,
-  //   onSuccess: handleExportInvoiceSuccess,
-  //   onError: handleExportInvoiceError
-  // })
 
   function handleExportInvoiceSuccess(data: any) {
     if (data?.message) {

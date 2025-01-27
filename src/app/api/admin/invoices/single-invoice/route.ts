@@ -5,8 +5,8 @@ import { z } from 'zod'
 
 import InvoiceModel from '@/models/invoice.model'
 
-import { axiosInstance } from '@/services/axiosCofig'
 import DistributorsModel from '@/models/distributors.model'
+import InvoiceItemModel from '@/models/invoiceItem.model'
 
 export async function GET(request: NextRequest) {
   try {
@@ -33,9 +33,9 @@ export async function GET(request: NextRequest) {
     }
     const distributorId = invoice.distributor
     const distributor = await DistributorsModel.findById(distributorId)
-    const invoiceItems = await axiosInstance.get(`/admin/invoices/invoice-items?invoice_id=${id}`).then(res => res.data)
+    const invoiceItems = await InvoiceItemModel.find({ invoice_id: id }).populate('product')
 
-    const invoiceTotal = invoiceItems?.invoiceItems.reduce((acc: number, item: any) => {
+    const invoiceTotal = invoiceItems?.reduce((acc: number, item: any) => {
       return acc + item.product.price * item.qty
     }, 0)
 

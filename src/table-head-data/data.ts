@@ -85,6 +85,7 @@ export const INVOICE_HEAD_DATA = [
   'Distributor name',
   'total items',
   'total amount',
+  'Discount',
   'Due Date',
   'created at',
   'updated at',
