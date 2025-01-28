@@ -456,29 +456,32 @@ const InvoiceAddAndEditCard = ({ params }: { params?: { invoiceId: string } }) =
                           rules={{
                             required: true
                           }}
-                          render={({ field: { value, onChange, onBlur } }) => (
-                            <div>
-                              <Typography className='font-medium' color='text.primary'>
-                                Discount
-                                {/* <span
-                                  style={{
-                                    color: theme.palette.error.light
-                                  }}
-                                >
-                                  *
-                                </span> */}
-                              </Typography>
-                              <CustomTextField
-                                {...(isBelowMdScreen && { fullWidth: true })}
-                                type='number'
-                                placeholder='0'
-                                value={value ? value : ''}
-                                onBlur={onBlur}
-                                className='mbe-5'
-                                onChange={onChange}
-                              />
-                            </div>
-                          )}
+                          render={({ field: { value, onChange, onBlur } }) => {
+                            setDiscountValue(value as any)
+                            return (
+                              <div>
+                                <Typography className='font-medium' color='text.primary'>
+                                  Discount
+                                  {/* <span
+                                  	style={{
+                                    	color: theme.palette.error.light
+                                  	}}
+                                	>
+                                  	*
+                                	</span> */}
+                                </Typography>
+                                <CustomTextField
+                                  {...(isBelowMdScreen && { fullWidth: true })}
+                                  type='number'
+                                  placeholder='0'
+                                  value={value ? value : ''}
+                                  onBlur={onBlur}
+                                  className='mbe-5'
+                                  onChange={onChange}
+                                />
+                              </div>
+                            )
+                          }}
                         />
                       </div>
                     </div>
@@ -689,7 +692,7 @@ const InvoiceAddAndEditCard = ({ params }: { params?: { invoiceId: string } }) =
                         <div className='flex items-center justify-between'>
                           <Typography>Total invoice cost:</Typography>
                           <Typography className='font-medium' color='text.primary'>
-                            {totalCost > 0 ? `${totalCost - (values?.discount || 0)} Rs` : 0}
+                            {totalCost > 0 ? `${totalCost - (discountValue || 0)} Rs` : 0}
                           </Typography>
                         </div>
                       </div>
